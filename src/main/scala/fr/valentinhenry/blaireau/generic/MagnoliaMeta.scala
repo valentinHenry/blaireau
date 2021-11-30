@@ -71,6 +71,7 @@ private[generic] object MagnoliaMeta {
 
       val generic = Generic[T]
 
+      // FIXME this part is not type safe!!!
       val codec = metaAcc.codec.imap[T] { o =>
         // Looks bad
         val tList = metaAcc.twiddler.from(o)
