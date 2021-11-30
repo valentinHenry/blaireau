@@ -5,7 +5,7 @@
 
 package blaireau.generic
 
-import blaireau.Meta
+import blaireau.{BlaireauConfiguration, Meta}
 import magnolia.{CaseClass, SealedTrait}
 import skunk._
 import skunk.util.Twiddler
@@ -16,7 +16,7 @@ import scala.language.experimental.macros
 
 //TODO find a way to make it type safe...
 private[generic] object MagnoliaMeta {
-  trait MetaAcc{
+  trait MetaAcc {
     type CurrType
 
     type CodecTwiddlerT
@@ -27,13 +27,13 @@ private[generic] object MagnoliaMeta {
     def twiddler: Twiddler.Aux[TList, CodecTwiddlerT]
   }
 
-  def combine[T: Generic](ctx: CaseClass[Meta, T]): Meta[T] = {
-    if (ctx.isValueClass){
+  def combine[T: Generic](ctx: CaseClass[Meta, T])(implicit config: BlaireauConfiguration): Meta[T] =
+    if (ctx.isValueClass) {
       val param = ctx.parameters.head
       val codec = param.typeclass.codec.imap[T](p => ctx.rawConstruct(Seq(p)))(cc => param.dereference(cc))
       Meta(codec, Nil)
 
-    } else if (ctx.parameters.isEmpty){
+    } else if (ctx.parameters.isEmpty) {
       Meta(Void.codec.imap(_ => ctx.rawConstruct(Seq.empty[Any]))(_ => Void), Nil)
 
     } else {
@@ -43,7 +43,7 @@ private[generic] object MagnoliaMeta {
       val firstMetaAcc: MetaAcc = new MetaAcc {
         override type CurrType = firstParam.PType
 
-        override type TList = CurrType :: HNil
+        override type TList          = CurrType :: HNil
         override type CodecTwiddlerT = firstParam.PType
 
         override def codec: Codec[CodecTwiddlerT] = firstParam.typeclass.codec
@@ -51,11 +51,11 @@ private[generic] object MagnoliaMeta {
         override def twiddler: Twiddler.Aux[TList, CodecTwiddlerT] = Twiddler.base
       }
 
-      val (params, metaAcc) = parameters.tail.foldLeft((firstField, firstMetaAcc)){ case ((fields, metaAcc), curr) =>
+      val (params, metaAcc) = parameters.tail.foldLeft((firstField, firstMetaAcc)) { case ((fields, metaAcc), curr) =>
         val currMeta = curr.typeclass
         val currMetaAux: MetaAcc = new MetaAcc {
           override type CurrType = curr.PType
-          override type TList = CurrType :: metaAcc.TList
+          override type TList    = CurrType :: metaAcc.TList
 
           override type CodecTwiddlerT = metaAcc.CodecTwiddlerT ~ curr.PType
 
@@ -81,19 +81,22 @@ private[generic] object MagnoliaMeta {
       // FIXME this part is not type safe!!!
       val codec = metaAcc.codec.imap[T] { o =>
         // Looks bad
-        val tList = metaAcc.twiddler.from(o)
+        val tList        = metaAcc.twiddler.from(o)
         val genericTList = HList.unsafeReverse(tList).asInstanceOf[generic.Repr]
         generic.from(genericTList)
       } { i =>
         // Looks worse
         val genericTList = generic.to(i).asInstanceOf[HList]
-        val tList = HList.unsafeReverse(genericTList).asInstanceOf[metaAcc.TList]
+        val tList        = HList.unsafeReverse(genericTList).asInstanceOf[metaAcc.TList]
         metaAcc.twiddler.to(tList)
       }
 
-      Meta(codec, params)
+      def formatParams(params: List[String]): List[String] =
+        params.map(config.formatter)
+
+      Meta(codec, formatParams(params))
     }
-  }
+
   def dispatch[T](ctx: SealedTrait[Meta, T]): Meta[T] =
     throw new UnsupportedOperationException("ADTs are not supported at the moment")
 }

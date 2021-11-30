@@ -7,7 +7,7 @@ package blaireau
 
 import skunk.Codec
 
-case class Meta[T] (
+case class Meta[T](
   codec: Codec[T],
   fields: List[String]
 )

@@ -5,7 +5,7 @@
 
 package blaireau.generic.metas
 
-import blaireau.Meta
+import blaireau.{BlaireauConfiguration, Meta}
 import blaireau.generic.MagnoliaMeta
 import blaireau.metas.AllMetas
 import magnolia.{CaseClass, Magnolia, SealedTrait}
@@ -16,7 +16,7 @@ import scala.language.experimental.macros
 object auto extends AllMetas {
   type Typeclass[T] = Meta[T]
 
-  def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Typeclass[T] = {
+  def combine[T: Generic](ctx: CaseClass[Typeclass, T])(implicit config: BlaireauConfiguration): Typeclass[T] = {
     val meta = MagnoliaMeta.combine[T](ctx)
     tools.assertFieldsIntegrity(ctx.typeName.short, meta)
     meta

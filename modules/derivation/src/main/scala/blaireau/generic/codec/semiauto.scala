@@ -5,7 +5,7 @@
 
 package blaireau.generic.codec
 
-import blaireau.Meta
+import blaireau.{BlaireauConfiguration, Meta}
 import blaireau.generic.MagnoliaMeta
 import magnolia.{CaseClass, Magnolia, SealedTrait}
 import shapeless.Generic
@@ -15,6 +15,7 @@ import scala.language.experimental.macros
 
 object semiauto {
   type Typeclass[T] = Meta[T]
+  implicit val blaireauConfig: BlaireauConfiguration = BlaireauConfiguration.default
 
   def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Typeclass[T] =
     MagnoliaMeta.combine[T](ctx)

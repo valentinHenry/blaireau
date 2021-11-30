@@ -11,8 +11,7 @@ private[metas] object tools {
   def assertFieldsIntegrity[T](typeName: String, meta: Meta[T]): Unit = {
     val groupedFields = meta.fields.groupBy(identity)
     assert(
-      groupedFields.keys.size == meta.fields.size,
-      {
+      groupedFields.keys.size == meta.fields.size, {
         val duplicatedFields = groupedFields.filter(_._2.size >= 2).keys
         s"""\nFailed to create Meta for class $typeName. It has duplicated fields:
            |${duplicatedFields.mkString(" - ", "\n - ", "")}""".stripMargin
