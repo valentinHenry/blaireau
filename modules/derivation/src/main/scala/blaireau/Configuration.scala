@@ -5,13 +5,6 @@
 
 package blaireau
 
-import skunk.Codec
+class Configuration {
 
-case class Meta[T] (
-  codec: Codec[T],
-  fields: List[String]
-)
-
-object Meta {
-  def apply[T <: AnyVal](codec: Codec[T]): Meta[T] = Meta(codec, Nil)
 }

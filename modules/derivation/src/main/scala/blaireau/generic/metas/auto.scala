@@ -1,4 +1,5 @@
 // Written by Valentin HENRY
+//
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
@@ -16,20 +17,8 @@ object auto extends AllMetas {
   type Typeclass[T] = Meta[T]
 
   def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Typeclass[T] = {
-    def assertFieldsIntegrity(meta: Meta[T]): Unit = {
-      val groupedFields = meta.fields.groupBy(identity)
-      assert(
-        groupedFields.keys.size == meta.fields.size,
-        {
-          val duplicatedFields = groupedFields.filter(_._2.size >= 2).keys
-          s"""\nFailed to create Meta for class ${ctx.typeName.short}. It has duplicated fields:
-             |${duplicatedFields.mkString(" - ", "\n - ", "")}""".stripMargin
-        }
-      )
-    }
-
     val meta = MagnoliaMeta.combine[T](ctx)
-    assertFieldsIntegrity(meta)
+    tools.assertFieldsIntegrity(ctx.typeName.short, meta)
     meta
   }
 

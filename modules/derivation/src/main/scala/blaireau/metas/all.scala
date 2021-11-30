@@ -1,4 +1,5 @@
 // Written by Valentin HENRY
+//
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
@@ -20,5 +21,5 @@ trait AllMetas
     with TemporalMetas
 
 trait MetaDerivation {
-  implicit final def deriveOptionalMetaType[T](implicit m: Meta[T]): Meta[Option[T]] = Meta(m.opt, m.fields)
+  implicit final def deriveOptionalMetaType[T](implicit m: Meta[T]): Meta[Option[T]] = Meta(m.codec.opt, m.fields)
 }

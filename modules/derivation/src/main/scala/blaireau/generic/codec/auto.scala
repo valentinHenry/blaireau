@@ -1,4 +1,5 @@
 // Written by Valentin HENRY
+//
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
@@ -16,11 +17,11 @@ import scala.language.experimental.macros
 object auto extends AllMetas {
   type Typeclass[T] = Meta[T]
 
-  def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Typeclass[T] =
-    MagnoliaMeta.combine[T](ctx)
+  def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Codec[T] =
+    MagnoliaMeta.combine[T](ctx).codec
 
-  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] =
-    MagnoliaMeta.dispatch[T](sealedTrait)
+  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Codec[T] =
+    MagnoliaMeta.dispatch[T](sealedTrait).codec
 
   implicit def deriveAuto[T]: Codec[T] = macro Magnolia.gen[T]
 }
