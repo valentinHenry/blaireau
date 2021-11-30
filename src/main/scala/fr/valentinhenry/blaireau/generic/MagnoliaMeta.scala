@@ -11,7 +11,7 @@ import scala.language.experimental.macros
 
 //TODO find a way to make it type safe...
 private[generic] object MagnoliaMeta {
-  trait MetaAux{
+  trait MetaAcc{
     type CurrType
 
     type CodecTwiddlerT
@@ -27,11 +27,13 @@ private[generic] object MagnoliaMeta {
       val param = ctx.parameters.head
       val codec = param.typeclass.imap[T](p => ctx.rawConstruct(Seq(p)))(cc => param.dereference(cc))
       Meta(codec, Nil)
+    } else if (ctx.parameters.isEmpty){
+      Meta(Void.codec.imap(_ => ctx.rawConstruct(Seq.empty[Any]))(_ => Void), Nil)
     } else {
       val parameters = ctx.parameters
       val firstParam = parameters.head
-      val firstFields = if (firstParam.typeclass.fields.isEmpty) firstParam.label :: Nil else firstParam.typeclass.fields
-      val firstMetaAux: MetaAux = new MetaAux {
+      val firstField = if (firstParam.typeclass.fields.isEmpty) firstParam.label :: Nil else firstParam.typeclass.fields
+      val firstMetaAcc: MetaAcc = new MetaAcc {
         override type CurrType = firstParam.PType
 
         override type TList = CurrType :: HNil
@@ -42,24 +44,24 @@ private[generic] object MagnoliaMeta {
         override def twiddler: Twiddler.Aux[TList, CodecTwiddlerT] = Twiddler.base
       }
 
-      val (params, metaAux) = parameters.tail.foldLeft((firstFields, firstMetaAux)){ case ((fields, metaAux), curr) =>
+      val (params, metaAcc) = parameters.tail.foldLeft((firstField, firstMetaAcc)){ case ((fields, metaAcc), curr) =>
         val tc = curr.typeclass
-        val currMetaAux: MetaAux = new MetaAux {
+        val currMetaAux: MetaAcc = new MetaAcc {
           override type CurrType = curr.PType
-          override type TList = CurrType :: metaAux.TList
+          override type TList = CurrType :: metaAcc.TList
 
-          override type CodecTwiddlerT = metaAux.CodecTwiddlerT ~ curr.PType
+          override type CodecTwiddlerT = metaAcc.CodecTwiddlerT ~ curr.PType
 
-          override def codec: Codec[CodecTwiddlerT] = metaAux.codec ~ curr.typeclass
+          override def codec: Codec[CodecTwiddlerT] = metaAcc.codec ~ curr.typeclass
 
           override def twiddler: Twiddler.Aux[TList, CodecTwiddlerT] = new Twiddler[TList] {
             override type Out = CodecTwiddlerT
 
             override def to(h: TList): CodecTwiddlerT =
-              (metaAux.twiddler.to(h.tail), h.head)
+              (metaAcc.twiddler.to(h.tail), h.head)
 
             override def from(o: CodecTwiddlerT): TList =
-              o._2 :: metaAux.twiddler.from(o._1)
+              o._2 :: metaAcc.twiddler.from(o._1)
           }
         }
 
@@ -69,16 +71,16 @@ private[generic] object MagnoliaMeta {
 
       val generic = Generic[T]
 
-      val codec = metaAux.codec.imap[T] { o =>
+      val codec = metaAcc.codec.imap[T] { o =>
         // Looks bad
-        val tList = metaAux.twiddler.from(o)
+        val tList = metaAcc.twiddler.from(o)
         val genericTList = HList.unsafeReverse(tList).asInstanceOf[generic.Repr]
         generic.from(genericTList)
       } { i =>
         // Looks worse
         val genericTList = generic.to(i).asInstanceOf[HList]
-        val tList = HList.unsafeReverse(genericTList).asInstanceOf[metaAux.TList]
-        metaAux.twiddler.to(tList)
+        val tList = HList.unsafeReverse(genericTList).asInstanceOf[metaAcc.TList]
+        metaAcc.twiddler.to(tList)
       }
 
       Meta(codec, params)
