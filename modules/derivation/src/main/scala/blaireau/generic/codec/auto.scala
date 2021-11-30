@@ -1,8 +1,12 @@
-package fr.valentinhenry.blaireau.generic.codec
+// Written by Valentin HENRY
+// This software is licensed under the MIT License (MIT).
+// For more information see LICENSE or https://opensource.org/licenses/MIT
 
-import fr.valentinhenry.blaireau.Meta
-import fr.valentinhenry.blaireau.generic.MagnoliaMeta
-import fr.valentinhenry.blaireau.metas.AllMetas
+package blaireau.generic.codec
+
+import blaireau.Meta
+import blaireau.generic.MagnoliaMeta
+import blaireau.metas.AllMetas
 import magnolia.{CaseClass, Magnolia, SealedTrait}
 import shapeless.Generic
 import skunk.Codec

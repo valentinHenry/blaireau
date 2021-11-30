@@ -1,6 +1,10 @@
-package fr.valentinhenry.blaireau.generic
+// Written by Valentin HENRY
+// This software is licensed under the MIT License (MIT).
+// For more information see LICENSE or https://opensource.org/licenses/MIT
 
-import fr.valentinhenry.blaireau.Meta
+package blaireau.generic
+
+import blaireau.Meta
 import magnolia.{CaseClass, SealedTrait}
 import skunk._
 import skunk.util.Twiddler

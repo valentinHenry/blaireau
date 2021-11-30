@@ -1,6 +1,10 @@
-package fr.valentinhenry.blaireau.metas
+// Written by Valentin HENRY
+// This software is licensed under the MIT License (MIT).
+// For more information see LICENSE or https://opensource.org/licenses/MIT
 
-import fr.valentinhenry.blaireau.Meta
+package blaireau.metas
+
+import blaireau.Meta
 import skunk.codec.NumericCodecs
 
 trait NumericMetas extends NumericCodecs {
