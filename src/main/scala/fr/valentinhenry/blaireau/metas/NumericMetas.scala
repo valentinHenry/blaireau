@@ -1,13 +1,13 @@
 package fr.valentinhenry.blaireau.metas
 
-import fr.valentinhenry.blaireau.MetaType
+import fr.valentinhenry.blaireau.Meta
 import skunk.codec.NumericCodecs
 
 trait NumericMetas extends NumericCodecs {
-  implicit val shortMeta: MetaType[Short]           = MetaType(int2)
-  implicit val intMeta: MetaType[Int]               = MetaType(int4)
-  implicit val longMeta: MetaType[Long]             = MetaType(int8)
-  implicit val bigDecimalMeta: MetaType[BigDecimal] = MetaType(numeric)
-  implicit val floatMeta: MetaType[Float]           = MetaType(float4)
-  implicit val doubleMeta: MetaType[Double]         = MetaType(float8)
+  implicit val shortMeta: Meta[Short]           = Meta(int2, Nil)
+  implicit val intMeta: Meta[Int]               = Meta(int4, Nil)
+  implicit val longMeta: Meta[Long]             = Meta(int8, Nil)
+  implicit val bigDecimalMeta: Meta[BigDecimal] = Meta(numeric, Nil)
+  implicit val floatMeta: Meta[Float]           = Meta(float4, Nil)
+  implicit val doubleMeta: Meta[Double]         = Meta(float8, Nil)
 }

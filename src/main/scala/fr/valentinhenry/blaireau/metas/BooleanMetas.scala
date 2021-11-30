@@ -1,8 +1,8 @@
 package fr.valentinhenry.blaireau.metas
 
-import fr.valentinhenry.blaireau.MetaType
+import fr.valentinhenry.blaireau.Meta
 import skunk.codec.BooleanCodec
 
 trait BooleanMetas extends BooleanCodec {
-  implicit val booleanMeta: MetaType[Boolean] = MetaType(bool)
+  implicit val booleanMeta: Meta[Boolean] = Meta(bool, Nil)
 }

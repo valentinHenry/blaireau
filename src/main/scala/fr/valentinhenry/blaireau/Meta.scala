@@ -1,18 +1,24 @@
 package fr.valentinhenry.blaireau
 
-import skunk.Codec
+import cats.data.State
+import skunk.data.Type
+import skunk.{Codec, Decoder}
 
-sealed trait Meta[+T]
+trait Meta[T] extends Codec[T] {
+  def fields: List[String]
 
-case class MetaType[T](
-  codec: Codec[T]
-) extends Meta[T]
+  def asCodec: Codec[T] = this
 
-case class MetaField[T](
-  fieldType: Codec[T],
-  fieldName: String
-)
-
-case class MetaCodec[A](
-  fields: List[MetaField[_]]
-) extends Meta[A]
+  override def imap[B](f: T => B)(g: B => T): Meta[B] =
+    Meta(super.imap(f)(g), fields)
+}
+object Meta {
+  def apply[A](codec: Codec[A], f: List[String]): Meta[A] =
+    new Meta[A] {
+      override def fields: List[String] = f
+      override def sql: State[Int, String] = codec.sql
+      override def encode(a: A): List[Option[String]] = codec.encode(a)
+      override def types: List[Type] = codec.types
+      override def decode(offset: Int, ss: List[Option[String]]): Either[Decoder.Error, A] = codec.decode(offset, ss)
+    }
+}

@@ -1,9 +1,9 @@
 package fr.valentinhenry.blaireau.metas
 
-import fr.valentinhenry.blaireau.MetaType
+import fr.valentinhenry.blaireau.Meta
 import skunk.codec.TextCodecs
 
 trait TextMetas extends TextCodecs {
   //TODO find a solution for bpchar and varchar...
-  implicit val stringMeta: MetaType[String] = MetaType(text)
+  implicit val stringMeta: Meta[String] = Meta(text, Nil)
 }

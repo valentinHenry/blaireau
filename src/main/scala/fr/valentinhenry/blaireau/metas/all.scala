@@ -1,12 +1,12 @@
 package fr.valentinhenry.blaireau.metas
 
-import fr.valentinhenry.blaireau.MetaType
+import fr.valentinhenry.blaireau.Meta
 import skunk.Codec
 
 object all extends AllMetas
 
 trait AllMetas
-    extends MetaCodecDerivation
+    extends MetaDerivation
     with NumericMetas
     with BinaryMetas
     with UuidMetas
@@ -15,6 +15,6 @@ trait AllMetas
     with BooleanMetas
     with TemporalMetas
 
-trait MetaCodecDerivation {
-  implicit final def deriveMetaType[T](implicit c: Codec[T]): MetaType[T] = MetaType(c)
+trait MetaDerivation {
+  implicit final def deriveOptionalMetaType[T](implicit m: Meta[T]): Meta[Option[T]] = Meta(m.opt, m.fields)
 }
