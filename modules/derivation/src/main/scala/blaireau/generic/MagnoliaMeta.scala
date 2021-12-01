@@ -74,9 +74,12 @@ private[generic] object MagnoliaMeta {
         val formatter = config.formatter
 
         def makeField(p: Param[Meta, T]): MetaField = new MetaField {
-          override type T = p.PType
+          override private[blaireau] type FieldType = p.PType
 
-          override def name: String = formatter(p.label)
+          override private[blaireau] def name: String    = p.label
+          override private[blaireau] def sqlName: String = formatter(p.label)
+
+          override private[blaireau] def codec: Codec[FieldType] = p.typeclass.codec
         }
 
         val firstField: List[MetaField] =
