@@ -25,5 +25,5 @@ object auto extends AllMetas {
   def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] =
     MagnoliaMeta.dispatch[T](sealedTrait)
 
-  implicit def deriveAuto[T]: Typeclass[T] = macro Magnolia.gen[T]
+  implicit def meta[T]: Typeclass[T] = macro Magnolia.gen[T]
 }

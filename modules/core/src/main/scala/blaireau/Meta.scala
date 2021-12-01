@@ -7,9 +7,14 @@ package blaireau
 
 import skunk.Codec
 
+trait MetaField {
+  type T
+  def name: String
+}
+
 case class Meta[T](
   codec: Codec[T],
-  fields: List[String]
+  fields: List[MetaField]
 )
 
 object Meta {

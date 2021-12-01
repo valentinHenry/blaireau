@@ -17,11 +17,11 @@ object semiauto {
   type Typeclass[T] = Meta[T]
   implicit val blaireauConfig: BlaireauConfiguration = BlaireauConfiguration.default
 
-  def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Typeclass[T] =
-    MagnoliaMeta.combine[T](ctx)
+  def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Codec[T] =
+    MagnoliaMeta.combine[T](ctx).codec
 
-  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] =
-    MagnoliaMeta.dispatch[T](sealedTrait)
+  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Codec[T] =
+    MagnoliaMeta.dispatch[T](sealedTrait).codec
 
   def deriveCodec[T]: Codec[T] = macro Magnolia.gen[T]
 }
