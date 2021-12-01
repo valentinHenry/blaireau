@@ -17,7 +17,9 @@ trait MetaField {
 case class Meta[T](
   codec: Codec[T],
   fields: List[MetaField]
-) {
+) extends DbElt[T]
+
+trait DbElt[T] { self: Meta[T] =>
   def selectDynamic(name: String): MetaField =
     fields.find(_.name == name) match {
       case Some(value) => value
