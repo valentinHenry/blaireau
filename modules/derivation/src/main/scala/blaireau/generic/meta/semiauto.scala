@@ -3,17 +3,16 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.generic.metas
+package blaireau.generic.meta
 
 import blaireau.{BlaireauConfiguration, Meta}
 import blaireau.generic.MagnoliaMeta
-import blaireau.metas.AllMetas
 import magnolia.{CaseClass, Magnolia, SealedTrait}
 import shapeless.Generic
 
 import scala.language.experimental.macros
 
-object auto extends AllMetas {
+object semiauto {
   type Typeclass[T] = Meta[T]
 
   def combine[T: Generic](ctx: CaseClass[Typeclass, T])(implicit config: BlaireauConfiguration): Typeclass[T] = {
@@ -25,5 +24,5 @@ object auto extends AllMetas {
   def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] =
     MagnoliaMeta.dispatch[T](sealedTrait)
 
-  implicit def meta[T]: Typeclass[T] = macro Magnolia.gen[T]
+  def deriveMeta[T]: Typeclass[T] = macro Magnolia.gen[T]
 }

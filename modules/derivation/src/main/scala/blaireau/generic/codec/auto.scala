@@ -14,15 +14,18 @@ import skunk.Codec
 
 import scala.language.experimental.macros
 
+//TODO do not use MagnoliaMeta
 object auto extends AllMetas {
   type Typeclass[T] = Meta[T]
   implicit val blaireauConfig: BlaireauConfiguration = BlaireauConfiguration.default
 
-  def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Codec[T] =
-    MagnoliaMeta.combine[T](ctx).codec
+  def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Typeclass[T] =
+    MagnoliaMeta.combine[T](ctx)
 
-  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Codec[T] =
-    MagnoliaMeta.dispatch[T](sealedTrait).codec
+  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] =
+    MagnoliaMeta.dispatch[T](sealedTrait)
 
-  implicit def codec[T]: Codec[T] = macro Magnolia.gen[T]
+  private[blaireau] implicit def meta[T]: Typeclass[T] = macro Magnolia.gen[T]
+
+  implicit def codec[T: Meta]: Codec[T] = Meta[T].codec
 }

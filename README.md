@@ -48,23 +48,24 @@ required, it is preferable to use semi-automatic codec derivation.
 ### Semi-automatic
 
 ```scala
-import blaireau.generic.codec.semiauto._
-import skunk._
-import skunk.codec.all._
-
-case class Address(street: String, forest: String)
-
-case class Blaireau(name: String, age: Int, address: Address)
-
-implicit val addressCodec: Codec[Address] = (varchar ~ varchar(16)).gimap[Address]
-val blaireauCodec: Codec[Blaireau] = deriveCodec[Blaireau]
-// eqv to text ~ int4 ~ (varchar ~ varchar(16))
-
-val insert: Command[Blaireau] =
-  sql"""
-  INSERT INTO "blaireaux"
-  VALUES($blaireauCodec)
-""".command
+// FIXME
+// import blaireau.generic.codec.semiauto._
+// import skunk._
+// import skunk.codec.all._
+// 
+// case class Address(street: String, forest: String)
+// 
+// case class Blaireau(name: String, age: Int, address: Address)
+// 
+// implicit val addressCodec: Codec[Address] = (varchar ~ varchar(16)).gimap[Address]
+// val blaireauCodec: Codec[Blaireau] = deriveCodec[Blaireau]
+// // eqv to text ~ int4 ~ (varchar ~ varchar(16))
+// 
+// val insert: Command[Blaireau] =
+//   sql"""
+//   INSERT INTO "blaireaux"
+//   VALUES($blaireauCodec)
+// """.command
 ```
 
 ## SQL DSL

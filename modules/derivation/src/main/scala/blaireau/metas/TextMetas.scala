@@ -8,6 +8,8 @@ package blaireau.metas
 import blaireau.Meta
 import skunk.codec.TextCodecs
 
+object text extends TextMetas
+
 trait TextMetas extends TextCodecs {
   //TODO find a solution for bpchar and varchar...
   implicit val stringMeta: Meta[String] = Meta(text, Nil)

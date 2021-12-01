@@ -48,8 +48,8 @@ lazy val blaireau = project
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .dependsOn(core, dsl, derivation)
-  .aggregate(core, dsl, derivation)
+  .dependsOn(core, dsl, derivation, tests)
+  .aggregate(core, dsl, derivation, tests)
   .enablePlugins(ScalafmtPlugin)
 
 lazy val core = project
@@ -84,3 +84,14 @@ lazy val dsl = project
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
   .settings(commonSettings)
+
+lazy val tests = project
+  .in(file("modules/tests"))
+  .dependsOn(derivation, dsl)
+  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(ScalafmtPlugin)
+  .settings(commonSettings)
+  .settings(
+    publish / skip := true,
+    libraryDependencies += Dependencies.`munit`
+  )

@@ -8,6 +8,8 @@ package blaireau.metas
 import blaireau.Meta
 import skunk.codec.NumericCodecs
 
+object numeric extends NumericMetas
+
 trait NumericMetas extends NumericCodecs {
   implicit val shortMeta: Meta[Short]           = Meta(int2)
   implicit val intMeta: Meta[Int]               = Meta(int4)

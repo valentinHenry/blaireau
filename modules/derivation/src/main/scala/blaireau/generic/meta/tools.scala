@@ -3,11 +3,11 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.generic.metas
+package blaireau.generic.meta
 
 import blaireau.Meta
 
-private[metas] object tools {
+private[meta] object tools {
   def assertFieldsIntegrity[T](typeName: String, meta: Meta[T]): Unit = {
     val groupedFields = meta.fields.groupBy(identity)
     assert(
