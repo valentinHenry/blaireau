@@ -11,7 +11,7 @@ class CodecDerivationSpec extends FunSuite {
 
     val c: Codec[Simple] = implicitly
 
-    assert(c != null)
+    assertEquals(c.types.map(_.toString()), List("text"))
   }
 
   test("Can derive nested codec") {
@@ -22,7 +22,7 @@ class CodecDerivationSpec extends FunSuite {
 
     val c: Codec[NotSimple] = implicitly
 
-    assert(c != null)
+    assertEquals(c.types.map(_.toString()), List("text", "text"))
   }
 
   test("Can derive optional nested codec") {
@@ -33,22 +33,20 @@ class CodecDerivationSpec extends FunSuite {
 
     val c: Codec[NotSimple] = implicitly
 
-    assert(c != null)
+    assertEquals(c.types.map(_.toString()), List("text", "text"))
   }
 
-  //FIXME make codec derivation only deriving codecs, not metas
-//  test("Can semi-derive codec") {
-//    import blaireau.generic.codec.semiauto._
-//    import blaireau.metas.text._
-//    import blaireau.metas.numeric._
-//
-//    case class Address(street: String, forest: String)
-//
-//    case class Blaireau(name: String, age: Int, address: Address)
-//
-//    implicit val addressCodec: Codec[Address] = (varchar ~ varchar(16)).gimap[Address]
-//    val blaireauCodec: Codec[Blaireau]        = deriveCodec[Blaireau]
-//
-//    assert(blaireauCodec != null)
-//  }
+  test("Can semi-derive codec") {
+    import blaireau.generic.codec.semiauto._
+    import blaireau.generic.codec.instances.all._
+
+    case class Address(street: String, forest: String)
+
+    case class Blaireau(name: String, age: Int, address: Address)
+
+    implicit val addressCodec: Codec[Address] = (varchar ~ varchar(16)).gimap[Address]
+    val c: Codec[Blaireau]                    = deriveCodec[Blaireau]
+
+    assertEquals(c.types.map(_.toString()), List("text", "int4", "varchar", "varchar(16)"))
+  }
 }

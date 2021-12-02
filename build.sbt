@@ -48,9 +48,23 @@ lazy val blaireau = project
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .dependsOn(core, dsl, derivation, tests)
-  .aggregate(core, dsl, derivation, tests)
+  .dependsOn(core, dsl, `derivation-meta`, `derivation-codec`, tests)
+  .aggregate(core, dsl, `derivation-meta`, `derivation-codec`, tests)
   .enablePlugins(ScalafmtPlugin)
+
+lazy val `derivation-codec` = project
+  .in(file("modules/derivation/codec"))
+  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(ScalafmtPlugin)
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.`skunk`,
+      Dependencies.`shapeless`,
+      Dependencies.`magnolia`,
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
+    )
+  )
 
 lazy val core = project
   .in(file("modules/core"))
@@ -58,14 +72,13 @@ lazy val core = project
   .enablePlugins(ScalafmtPlugin)
   .settings(commonSettings)
   .settings(
-//    resolvers   +=  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     libraryDependencies ++= Seq(
       Dependencies.`skunk`
     )
   )
 
-lazy val derivation = project
-  .in(file("modules/derivation"))
+lazy val `derivation-meta` = project
+  .in(file("modules/derivation/meta"))
   .dependsOn(core)
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
@@ -87,7 +100,7 @@ lazy val dsl = project
 
 lazy val tests = project
   .in(file("modules/tests"))
-  .dependsOn(derivation, dsl)
+  .dependsOn(core, `derivation-meta`, `derivation-codec`, dsl)
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
   .settings(commonSettings)

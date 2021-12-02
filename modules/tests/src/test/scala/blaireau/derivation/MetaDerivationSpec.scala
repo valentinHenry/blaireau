@@ -1,6 +1,7 @@
 package blaireau.derivation
 
-import blaireau.{BlaireauConfiguration, Meta}
+import blaireau.Meta
+import blaireau.generic.meta.BlaireauConfiguration
 import munit.FunSuite
 
 class MetaDerivationSpec extends FunSuite {
@@ -15,6 +16,7 @@ class MetaDerivationSpec extends FunSuite {
     val c: Meta[Simple] = implicitly
 
     assertEquals(c.fields.map(_.name), List("test"))
+    assertEquals(c.codec.types.map(_.name), List("text"))
   }
 
   test("Can derive nested codec") {
@@ -28,6 +30,7 @@ class MetaDerivationSpec extends FunSuite {
     val c: Meta[NotSimple] = implicitly
 
     assertEquals(c.fields.map(_.name), List("ok", "test"))
+    assertEquals(c.codec.types.map(_.name), List("text", "text"))
   }
 
   test("Can derive optional nested codec") {
@@ -41,6 +44,7 @@ class MetaDerivationSpec extends FunSuite {
     val c: Meta[NotSimple] = implicitly
 
     assertEquals(c.fields.map(_.name), List("ok", "test", "test2", "really"))
+    assertEquals(c.codec.types.map(_.name), List("text", "text", "int8", "float8"))
   }
 
   test("Name from CamelCase to snake_case") {

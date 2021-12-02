@@ -35,31 +35,33 @@ object Action {
       )
   }
 
-  sealed trait BooleanOp[A] extends Action[A] { self =>
-    def &&[B](right: BooleanOp[B]): BooleanOp[A ~ B] = new BooleanOp[A ~ B] {
-      def codec: Codec[A ~ B] = self.codec ~ right.codec
-      def elt: A ~ B          = (self.elt, right.elt)
-
-      override def toFragment: Fragment[(A, B)] =
+  sealed trait BooleanOp[A] extends Action[A] with Product with Serializable { self =>
+    def &&[B](right: BooleanOp[B]): BooleanOp[A ~ B] =
+      ForgedBoolean(
+        self.codec ~ right.codec,
+        (self.elt, right.elt),
         sql"(${self.toFragment} AND ${right.toFragment})"
-    }
+      )
 
-    def ||[B](right: BooleanOp[B]): BooleanOp[A ~ B] = new BooleanOp[A ~ B] {
-      override def codec: Codec[A ~ B] = self.codec ~ right.codec
-
-      override def elt: A ~ B = self.elt ~ right.elt
-
-      override def toFragment: Fragment[A ~ B] =
+    def ||[B](right: BooleanOp[B]): BooleanOp[A ~ B] =
+      ForgedBoolean(
+        self.codec ~ right.codec,
+        self.elt ~ right.elt,
         sql"(${self.toFragment} OR ${right.toFragment})"
-    }
+      )
+  }
+
+  private[table] final case class ForgedBoolean[A](codec: Codec[A], elt: A, fragment: Fragment[A])
+      extends BooleanOp[A] {
+    override def toFragment: Fragment[A] = fragment
   }
 
   object BooleanOp {
-    def empty: BooleanOp[Void] = new BooleanOp[Void] {
-      override def codec: Codec[Void]         = Void.codec
-      override def elt: Void                  = Void
-      override def toFragment: Fragment[Void] = sql"TRUE"
-    }
+    def empty: BooleanOp[Void] = ForgedBoolean(
+      Void.codec,
+      Void,
+      sql"TRUE"
+    )
   }
 
   final case class BooleanEq[A](sqlField: String, codec: Codec[A], elt: A)

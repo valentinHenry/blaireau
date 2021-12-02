@@ -5,7 +5,7 @@
 
 package blaireau.dsl.table
 
-import blaireau.DbElt
+import blaireau.MetaField
 import blaireau.dsl.table.Action.BooleanOp
 import skunk._
 import skunk.syntax.StringContextOps
@@ -21,8 +21,10 @@ class SelectQuery[Entity, In](
   table: Table[Entity],
   where: BooleanOp[In]
 ) {
-  def filter[A](f: DbElt[Entity] => BooleanOp[A]): SelectQuery[Entity, In ~ A] =
-    new SelectQuery[Entity, In ~ A](table, where && f(table.meta))
+  private[this] val map: Map[String, MetaField] = table.meta.fields.map(f => f.name -> f).toMap
+
+  def filter[A](f: Map[String, MetaField] => BooleanOp[A]): SelectQuery[Entity, In ~ A] =
+    new SelectQuery[Entity, In ~ A](table, where && f(map))
 
   def toFragment: Fragment[In] = {
     val fields: String = table.meta.fields.map(_.name).mkString(",")

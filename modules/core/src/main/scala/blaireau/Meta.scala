@@ -14,18 +14,14 @@ trait MetaField {
   private[blaireau] def codec: Codec[FieldType]
 }
 
+object MetaField {
+  type Aux[T] = MetaField { type FieldType = T }
+}
+
 case class Meta[T](
   codec: Codec[T],
   fields: List[MetaField]
-) extends DbElt[T]
-
-trait DbElt[T] { self: Meta[T] =>
-  def selectDynamic(name: String): MetaField =
-    fields.find(_.name == name) match {
-      case Some(value) => value
-      case None        => throw new UnsupportedOperationException("This field does not exist")
-    }
-}
+)
 
 object Meta {
   def apply[T: Meta]: Meta[T] = implicitly

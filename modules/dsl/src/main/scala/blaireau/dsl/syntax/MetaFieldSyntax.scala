@@ -17,9 +17,9 @@ trait MetaFieldSyntax {
 }
 
 final class MetaFieldOps(val field: MetaField) {
-  def ==(right: field.FieldType): Action.BooleanEq[field.FieldType] =
-    Action.BooleanEq(field.sqlName, field.codec, right)
+  def ===(right: Any): Action.BooleanOp[field.FieldType] =
+    Action.BooleanEq(field.sqlName, field.codec, right.asInstanceOf[field.FieldType])
 
-  def !=(right: field.FieldType): Action.BooleanNEq[field.FieldType] =
+  def =!=(right: field.FieldType): Action.BooleanOp[field.FieldType] =
     Action.BooleanNEq(field.sqlName, field.codec, right)
 }

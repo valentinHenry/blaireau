@@ -16,10 +16,10 @@ $> sbt publishLocal
 
 In your `build.sbt` add the following line:
 ```scala
-// For the core of the library (useless alone):
-libraryDependencies += "fr.valentinhenry" %% "blaireau-core" % Version
-// For the codec automatic and semi-automatic derivation:
-libraryDependencies += "fr.valentinhenry" %% "blaireau-derivation" % Version
+// For automatic and semi-automatic skunk-codec derivation
+libraryDependencies += "fr.valentinhenry" %% "blaireau-derivation-codec" % Version
+// For automatic and semi-automatic meta derivation:
+libraryDependencies += "fr.valentinhenry" %% "blaireau-derivation-meta" % Version
 // For the SQL DSL:
 libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
 ```
@@ -36,7 +36,7 @@ case class Address(street: String, forest: String)
 case class Blaireau(name: String, age: Int, address: Address)
 
 //val blaireauCodec: Codec[Blaireau] = implicitly
-// eqv to text ~ int4 ~ (text ~ text)
+// eqv to Codec[text ~ int4 ~ (text ~ text)]
 
 val insert: Command[Blaireau] = sql"""
   INSERT INTO "blaireaux"
@@ -48,24 +48,23 @@ required, it is preferable to use semi-automatic codec derivation.
 ### Semi-automatic
 
 ```scala
-// FIXME
-// import blaireau.generic.codec.semiauto._
-// import skunk._
-// import skunk.codec.all._
-// 
-// case class Address(street: String, forest: String)
-// 
-// case class Blaireau(name: String, age: Int, address: Address)
-// 
-// implicit val addressCodec: Codec[Address] = (varchar ~ varchar(16)).gimap[Address]
-// val blaireauCodec: Codec[Blaireau] = deriveCodec[Blaireau]
-// // eqv to text ~ int4 ~ (varchar ~ varchar(16))
-// 
-// val insert: Command[Blaireau] =
-//   sql"""
-//   INSERT INTO "blaireaux"
-//   VALUES($blaireauCodec)
-// """.command
+import skunk._
+import blaireau.generic.codec.semiauto._
+import blaireau.generic.codec.instances.all._
+
+case class Address(street: String, forest: String)
+
+case class Blaireau(name: String, age: Int, address: Address)
+
+implicit val addressCodec: Codec[Address] = (varchar ~ varchar(16)).gimap[Address]
+val blaireauCodec: Codec[Blaireau] = deriveCodec[Blaireau]
+// eqv to Codec[text ~ int4 ~ (varchar ~ varchar(16))]
+
+val insert: Command[Blaireau] =
+  sql"""
+  INSERT INTO "blaireaux"
+  VALUES($blaireauCodec)
+""".command
 ```
 
 ## SQL DSL
