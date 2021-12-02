@@ -18,8 +18,6 @@ In your `build.sbt` add the following line:
 ```scala
 // For automatic and semi-automatic skunk-codec derivation
 libraryDependencies += "fr.valentinhenry" %% "blaireau-derivation-codec" % Version
-// For automatic and semi-automatic meta derivation:
-libraryDependencies += "fr.valentinhenry" %% "blaireau-derivation-meta" % Version
 // For the SQL DSL:
 libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
 ```

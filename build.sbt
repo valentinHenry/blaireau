@@ -48,12 +48,12 @@ lazy val blaireau = project
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .dependsOn(core, dsl, `derivation-meta`, `derivation-codec`, tests)
-  .aggregate(core, dsl, `derivation-meta`, `derivation-codec`, tests)
+  .dependsOn(dsl, `derivation-codec`)
+  .aggregate(dsl, `derivation-codec`)
   .enablePlugins(ScalafmtPlugin)
 
 lazy val `derivation-codec` = project
-  .in(file("modules/derivation/codec"))
+  .in(file("modules/derivation"))
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
   .settings(commonSettings)
@@ -66,45 +66,16 @@ lazy val `derivation-codec` = project
     )
   )
 
-lazy val core = project
-  .in(file("modules/core"))
+lazy val dsl = project
+  .in(file("modules/dsl"))
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.`skunk`
-    )
-  )
-
-lazy val `derivation-meta` = project
-  .in(file("modules/derivation/meta"))
-  .dependsOn(core)
-  .enablePlugins(AutomateHeaderPlugin)
-  .enablePlugins(ScalafmtPlugin)
-  .settings(commonSettings)
-  .settings(
-    libraryDependencies ++= Seq(
+      Dependencies.`skunk`,
       Dependencies.`shapeless`,
       Dependencies.`magnolia`,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided
     )
-  )
-
-lazy val dsl = project
-  .in(file("modules/dsl"))
-  .dependsOn(core)
-  .enablePlugins(AutomateHeaderPlugin)
-  .enablePlugins(ScalafmtPlugin)
-  .settings(commonSettings)
-
-lazy val tests = project
-  .in(file("modules/tests"))
-  .dependsOn(core, `derivation-meta`, `derivation-codec`, dsl)
-  .enablePlugins(AutomateHeaderPlugin)
-  .enablePlugins(ScalafmtPlugin)
-  .settings(commonSettings)
-  .settings(
-    publish / skip := true,
-    libraryDependencies += Dependencies.`munit`
   )
