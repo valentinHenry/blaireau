@@ -1,9 +1,10 @@
 package blaireau.dsl
 
-import blaireau.{Meta, MetaField}
+import blaireau.{ExportedMeta, Meta, MetaField}
 import cats.data.State
 import skunk.{Codec, Decoder, Encoder}
 import cats.syntax.all._
+import shapeless.Witness.Aux
 
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe.reify
@@ -81,16 +82,25 @@ object DSLSpec extends App {
       HNil
     )
 
+    implicit val hnilExportedMeta: ExportedMeta.Aux[HNil, HNil, HNil] = ExportedMeta(hnilMeta)
+
     implicit final def optionMeta[T, F <: HList](implicit m: Meta.Aux[T, F]): Meta.Aux[Option[T], F] =
       Meta[Option[T], F](m.codec.opt, m.fieldNames, m.metaFields)
 
     implicit final def codecToMeta[T](implicit c: Codec[T]): Meta.Aux[T, HNil] = Meta[T, HNil](c, Nil, HNil)
 
-    implicit final def hlistMetaSimple[K <: Symbol, H, HF <: HList, T <: HList, TF <: HList](implicit
+    /*
+    implicit final def hlistMetaSimple[
+      K <: Symbol,
+      H,
+      TE <: HList,
+      TM <: HList,
+      TF <: HList
+    ](implicit
       witness: Witness.Aux[K],
-      lHMeta: Lazy[Meta.Aux[H, HF]],
-      tMeta: Meta.Aux[T, TF]
-    ): Meta.Aux[H :: T, FieldType[K, MetaField[H]] :: TF] = {
+      lHMeta: Lazy[Meta.Aux[H, HNil]],
+      tMeta: Meta.Aux[TM, TF]
+    ): Meta.Aux[H :: TM, FieldType[K, MetaField[H]] :: TF] = {
       val fieldName: String = witness.value.name
       val hMeta             = lHMeta.value
       val hCodec            = hMeta.codec
@@ -109,54 +119,117 @@ object DSLSpec extends App {
 
       val codec = mergeCodecs(hMeta.codec, tCodec)
 
-      Meta[H :: T, FieldType[K, MetaField[H]] :: TF](
+      Meta(
         c = codec,
         f = fieldName :: tMeta.fieldNames,
         mf = metaField :: tMeta.metaFields
       )
     }
+     */
 
-//    implicit final def hlistMetaCompound[H, HF <: HList, T <: HList, TF <: HList, POut <: HList](implicit
-//      lHMeta: Lazy[Meta.Aux[H, HF]],
-//      hfLast: Last[HF], // Since last is found, hMeta has to be with at least one internal type
-//      tMeta: Meta.Aux[T, TF],
-//      p: Prepend.Aux[HF, TF, POut]
-//    ): Meta.Aux[H :: T, POut] = {
-//      val hMeta = lHMeta.value
-//
-//      val codec = mergeCodecs(hMeta.codec, tMeta.codec)
-//
-//      Meta[H :: T, POut](
-//        c = codec,
-//        f = hMeta.fieldNames ::: tMeta.fieldNames,
-//        mf = hMeta.metaFields ::: tMeta.metaFields
-//      )
-//    }
+    implicit final def hlistExportedMetaSimple[
+      K <: Symbol,
+      H,
+      TE <: HList,
+      TM <: HList,
+      TF <: HList
+    ](implicit
+      witness: Witness.Aux[K],
+      lHMeta: Lazy[Meta.Aux[H, HNil]],
+      tEMeta: ExportedMeta.Aux[TE, TM, TF]
+    ): ExportedMeta.Aux[FieldType[K, H] :: TE, H :: TM, FieldType[K, MetaField[H]] :: TF] = {
+      val fieldName: String = witness.value.name
+      val hMeta             = lHMeta.value
+      val hCodec            = hMeta.codec
+      val tCodec            = tEMeta.meta.codec
 
-    implicit final def genericMetaEncoder[A, H, F <: HList](implicit
-      generic: LabelledGeneric.Aux[A, H],
-      hMeta: Lazy[Meta.Aux[H, F]]
-    ): Meta.Aux[A, F] =
-      hMeta.value.imap(generic.from)(generic.to)
+      // Simple type
+      val metaField: FieldType[K, MetaField[H]] = field[K](
+        new MetaField[H] {
+          override def sqlName: String = fieldName
+
+          override def name: String = fieldName
+
+          override def codec: Codec[H] = hCodec
+        }
+      )
+
+      val codec = mergeCodecs(hMeta.codec, tCodec)
+
+      ExportedMeta(
+        Meta(
+          c = codec,
+          f = fieldName :: tEMeta.meta.fieldNames,
+          mf = metaField :: tEMeta.meta.metaFields
+        )
+      )
+    }
+
+    implicit final def hlistExportedMetaCompound[
+      K <: Symbol,
+      H,
+      HF <: HList,
+      TE <: HList,
+      TM <: HList,
+      TF <: HList,
+      POut <: HList
+    ](implicit
+      hMeta: Lazy[Meta.Aux[H, HF]],
+      hfLast: Last[HF], // Since last is found, hMeta has to be with at least one internal type
+      tMeta: Meta.Aux[TM, TF],
+      p: Prepend.Aux[HF, TF, POut]
+    ): ExportedMeta.Aux[FieldType[K, H] :: TE, H :: TM, POut] = {
+      val headMeta = hMeta.value
+
+      val codec = mergeCodecs(headMeta.codec, tMeta.codec)
+
+      ExportedMeta(
+        Meta[H :: TM, POut](
+          c = codec,
+          f = headMeta.fieldNames ::: tMeta.fieldNames,
+          mf = headMeta.metaFields ::: tMeta.metaFields
+        )
+      )
+    }
+
+    implicit final def genericExportedMeta[AG, RE, RM, RF <: HList](implicit
+      lgeneric: LabelledGeneric.Aux[AG, RE],
+      hMeta: Lazy[ExportedMeta.Aux[RE, RM, RF]]
+    ): ExportedMeta.Aux[AG, RM, RF] =
+      ExportedMeta(hMeta.value.meta)
   }
   import MetaDerivation._
 
   final case class IDK(yes: String, no: Int, maybe: Float)
+  final case class Hmm(idk: IDK, crap: Double)
+
   type TestT = FieldType["ok", Int] :: HNil
 
   import shapeless.syntax.singleton._
-  type K = Symbol with 6
-  type L = Symbol with 7
-  implicit val witnessK: Witness.Aux[K] = Witness.mkWitness[K](Symbol("kaka").asInstanceOf[Symbol with 6])
-  implicit val witnessL: Witness.Aux[L] = Witness.mkWitness[L](Symbol("lolo").asInstanceOf[Symbol with 7])
+  type K = Symbol with 1
+  type L = Symbol with 2
+  type M = Symbol with 3
+  implicit val kw: Aux[K] = Witness.mkWitness[K](Symbol("one").asInstanceOf[Symbol with 1])
+  implicit val lw: Aux[L] = Witness.mkWitness[L](Symbol("two").asInstanceOf[Symbol with 2])
+  implicit val mw: Aux[M] = Witness.mkWitness[M](Symbol("three").asInstanceOf[Symbol with 3])
 
-  val lHMeta: Lazy[Meta.Aux[Int, HNil]] = implicitly
-  val tMeta: Meta.Aux[HNil, HNil]       = implicitly
+  type TypeList = FieldType[K, String] :: FieldType[L, Int] :: FieldType[M, Long] :: HNil
 
-  val ok: Meta.Aux[Int :: HNil, FieldType[K, MetaField[Int]] :: FieldType[L, MetaField[String]] :: HNil] = implicitly
-//    hlistMetaSimple[K, Int, HNil, HNil, HNil]
-  println(ok.fieldNames)
-//  val jsp = hlistMetaSimple['ok, Int, HNil, HNil]
-//  val intM: Meta[TestT] = the[Meta[TestT]]
-//  println(intM.codec)
+  val exportedTest = the[ExportedMeta[TypeList]]
+
+  val exportedIDK = the[ExportedMeta[IDK]]
+  val idkMeta     = exportedIDK.meta
+  val idkFields   = idkMeta.metaFields
+
+//  def fieldRetriever[A](name: String): MetaField[A] =
+//    idkFields.get(Symbol(name))
+
+  val pray: MetaField[String] = idkFields.get(Symbol("yes"))
+  println(pray)
+  println(idkFields)
+  println(exportedIDK.meta.fieldNames)
+
+//  val exportedHmm = the[ExportedMeta[Hmm]]
+//  println(exportedHmm.meta.fieldNames)
+
 }
