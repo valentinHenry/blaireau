@@ -6,8 +6,10 @@
 
 **Blaireau** is a personal project in addition to being a work in progress, **hence the lack of documentation (and code).** 
 
+:warning" I (Valentin) am not even sure this really works (will test it later)... 
+
 ## Quickstart with sbt
-No artefacts is published at the moment therefore you must publish it locally
+If you want to test / have fun with it, no artefacts is published at the moment therefore you must publish it locally
 ```shell
 $> git clone git@github.com:valentinHenry/blaireau.git
 $> cd blaireau/
@@ -23,7 +25,7 @@ libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
 ```
 
 ## Codec derivation
-**Blaireau** provides two ways of deriving codecs: automatic and semi-automatic
+**Blaireau** provides two ways of deriving codecs: automatic and semi-automatic using magnolia.
 
 ### Automatic
 ```scala
@@ -66,4 +68,4 @@ val insert: Command[Blaireau] =
 ```
 
 ## SQL DSL
-TODO
+WIP

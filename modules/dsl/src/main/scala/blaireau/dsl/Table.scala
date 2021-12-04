@@ -5,7 +5,7 @@
 
 package blaireau.dsl
 
-import blaireau.Meta
+import blaireau.metas.Meta
 
 object Table {
 //  def apply[T](name: String)(implicit m: Meta[T]): Table[T] = new Table[T](name, Meta[T])
