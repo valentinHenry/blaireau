@@ -15,10 +15,15 @@ trait AllCodecInstances
     with BinaryCodecInstances
     with UuidCodecInstances
     with EnumCodecInstances
-    with TextMetaInstances
+    with TextCodecInstances
     with BooleanCodecInstances
     with TemporalCodecInstances
+    with VoidCodecInstances
 
 trait CodecDerivation {
   implicit final def deriveOptionalCodecType[T](implicit m: Codec[T]): Codec[Option[T]] = m.opt
+}
+
+trait VoidCodecInstances {
+  implicit final val voidCodec: Codec[skunk.Void] = skunk.Void.codec
 }

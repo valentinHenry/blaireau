@@ -68,7 +68,27 @@ object Action {
       extends Op[A]("=", sqlField)
       with BooleanOp[A]
 
+  final case class BooleanLike[A](sqlField: String, codec: Codec[A], elt: A)
+      extends Op[A]("like", sqlField)
+      with BooleanOp[A]
+
   final case class BooleanNEq[A](sqlField: String, codec: Codec[A], elt: A)
       extends Op[A]("<>", sqlField)
+      with BooleanOp[A]
+
+  final case class BooleanGt[A](sqlField: String, codec: Codec[A], elt: A)
+      extends Op[A](">", sqlField)
+      with BooleanOp[A]
+
+  final case class BooleanGtEq[A](sqlField: String, codec: Codec[A], elt: A)
+      extends Op[A](">=", sqlField)
+      with BooleanOp[A]
+
+  final case class BooleanLt[A](sqlField: String, codec: Codec[A], elt: A)
+      extends Op[A]("<", sqlField)
+      with BooleanOp[A]
+
+  final case class BooleanLtEq[A](sqlField: String, codec: Codec[A], elt: A)
+      extends Op[A]("<", sqlField)
       with BooleanOp[A]
 }

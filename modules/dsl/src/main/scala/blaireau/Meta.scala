@@ -5,26 +5,43 @@
 
 package blaireau
 
+import shapeless.{HList, HNil}
 import skunk.Codec
 
-trait MetaField {
-  private[blaireau] type FieldType
+import scala.language.implicitConversions
+
+trait MetaField[H] {
   private[blaireau] def sqlName: String
   private[blaireau] def name: String
-  private[blaireau] def codec: Codec[FieldType]
+  private[blaireau] def codec: Codec[H]
 }
 
-object MetaField {
-  type Aux[T] = MetaField { type FieldType = T }
-}
+trait Meta[T] { self =>
+  type F <: HList
 
-case class Meta[T](
-  codec: Codec[T],
-  fields: List[MetaField]
-)
+  def codec: Codec[T]
+  def fieldNames: List[String]
+  def metaFields: F
+
+  def imap[B](f: T => B)(g: B => T): Meta.Aux[B, F] =
+    new Meta[B] {
+      type F = self.F
+      def codec: Codec[B]          = self.codec.imap(f)(g)
+      def fieldNames: List[String] = self.fieldNames
+      def metaFields: F            = self.metaFields
+    }
+}
 
 object Meta {
-  def apply[T: Meta]: Meta[T] = implicitly
+  type Aux[T, FieldsT <: HList] = Meta[T] { type F = FieldsT }
 
-  def apply[T <: AnyVal](codec: Codec[T]): Meta[T] = Meta(codec, Nil)
+  def getFields[T, F <: HList](meta: Meta.Aux[T, F]): F = meta.metaFields
+
+  def apply[T, FieldsT <: HList](c: Codec[T], f: List[String], mf: FieldsT): Meta.Aux[T, FieldsT] = new Meta[T] {
+    override type F = FieldsT
+    override def codec: Codec[T]          = c
+    override def fieldNames: List[String] = f
+    override def metaFields: FieldsT      = mf
+  }
+
 }

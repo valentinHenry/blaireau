@@ -8,9 +8,9 @@ package blaireau.generic.codec.instances
 import skunk.Codec
 import skunk.codec.TextCodecs
 
-object text extends TextMetaInstances
+object text extends TextCodecInstances
 
-trait TextMetaInstances extends TextCodecs {
+trait TextCodecInstances extends TextCodecs {
   //TODO find a solution for bpchar and varchar...
   implicit val stringCodec: Codec[String] = text
 }
