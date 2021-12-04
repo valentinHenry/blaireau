@@ -6,7 +6,7 @@
 package blaireau.generic.codec
 
 import magnolia.{CaseClass, Magnolia, SealedTrait}
-import shapeless.Generic
+import _root_.shapeless.Generic
 import skunk.Codec
 
 import scala.language.experimental.macros

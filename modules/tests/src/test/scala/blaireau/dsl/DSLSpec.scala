@@ -20,4 +20,9 @@ object DSLSpec extends App {
 //  val exportedHmm = the[ExportedMeta[Hmm]]
 //  println(exportedHmm.meta.fieldNames)
 
+  val idks = Table[IDK]("idks")
+
+  val r   = idkFields.record.yes
+  val hmm = idks.select('yes, 'maybe)
+  println(hmm.select)
 }

@@ -5,9 +5,6 @@
 
 package blaireau.dsl
 
-import blaireau.dsl.table.Action
-import blaireau.metas.MetaField
-
 import scala.language.implicitConversions
 
 package object syntax {

@@ -3,7 +3,7 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl.table
+package blaireau.dsl
 
 import skunk.syntax.StringContextOps
 import skunk.syntax.all._
@@ -51,8 +51,7 @@ object Action {
       )
   }
 
-  private[table] final case class ForgedBoolean[A](codec: Codec[A], elt: A, fragment: Fragment[A])
-      extends BooleanOp[A] {
+  private final case class ForgedBoolean[A](codec: Codec[A], elt: A, fragment: Fragment[A]) extends BooleanOp[A] {
     override def toFragment: Fragment[A] = fragment
   }
 

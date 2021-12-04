@@ -6,7 +6,7 @@
 package blaireau.generic.codec
 
 import magnolia.{CaseClass, Param, SealedTrait}
-import shapeless.{Generic, HList}
+import _root_.shapeless.{:: => :*:, Generic, HList, HNil}
 import skunk._
 import skunk.util.Twiddler
 
@@ -25,7 +25,7 @@ private[generic] object MagnoliaCodec {
     def first[T](firstParam: Param[Codec, T]): CodecAcc =
       new CodecAcc {
         override type CurrType       = firstParam.PType
-        override type TList          = CurrType :: HNil
+        override type TList          = CurrType :*: HNil
         override type CodecTwiddlerT = firstParam.PType
 
         override def codec: Codec[CodecTwiddlerT]                  = firstParam.typeclass
@@ -35,7 +35,7 @@ private[generic] object MagnoliaCodec {
     def product[T](curr: Param[Codec, T], codecAcc: CodecAcc): CodecAcc =
       new CodecAcc {
         override type CurrType = curr.PType
-        override type TList    = CurrType :: codecAcc.TList
+        override type TList    = CurrType :*: codecAcc.TList
 
         override type CodecTwiddlerT = curr.PType ~ codecAcc.CodecTwiddlerT
 
