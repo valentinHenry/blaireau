@@ -5,20 +5,51 @@
 
 package blaireau.generic.codec
 
-import blaireau.generic.codec.instances.AllCodecInstances
-import magnolia.{CaseClass, Magnolia, SealedTrait}
-import _root_.shapeless.Generic
-import skunk.Codec
+import skunk.util.Twiddler
+import skunk.{Codec, ~}
+import _root_.shapeless.{::, Generic, HList, HNil, Lazy}
+import _root_.shapeless.ops.hlist.{Init, Last, Prepend}
 
-import scala.language.experimental.macros
+object auto extends ShapelessDerivation
 
-object auto extends AllCodecInstances {
-  type Typeclass[T] = Codec[T]
-  def combine[T: Generic](ctx: CaseClass[Typeclass, T]): Typeclass[T] =
-    MagnoliaCodec.combine[T](ctx)
+trait ShapelessDerivation {
+  implicit final def genericCodecEncoder[A, H, CT](implicit
+    generic: Generic.Aux[A, H],
+    codec0: Lazy[Codec0.Aux[H, CT]],
+    tw: Twiddler.Aux[H, CT]
+  ): Codec[A] =
+    codec0.value.codec.gimap
+}
 
-  def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] =
-    MagnoliaCodec.dispatch[T](sealedTrait)
+trait Codec0[T] {
+  type CodecT
+  def codec: Codec[CodecT]
+}
 
-  implicit def codec[T]: Codec[T] = macro Magnolia.gen[T]
+object Codec0 {
+  type Aux[T, C] = Codec0[T] { type CodecT = C }
+
+  def apply[T, C](c: Codec[C]): Codec0.Aux[T, C] = new Codec0[T] {
+    override type CodecT = C
+    override val codec: Codec[CodecT] = c
+  }
+
+  implicit def base0[H](implicit
+    hCodec: Lazy[Codec[H]]
+  ): Codec0.Aux[H :: HNil, H] =
+    Codec0(hCodec.value)
+
+  implicit def hlistCodec0[
+    A <: HList,
+    LO,
+    IO <: HList,
+    CO
+  ](implicit
+    init: Init.Aux[A, IO],
+    last: Last.Aux[A, LO],
+    hCodec: Codec[LO],
+    tCodec: Codec0.Aux[IO, CO],
+    a: Prepend.Aux[IO, LO :: HNil, A]
+  ): Codec0.Aux[A, CO ~ LO] =
+    Codec0(tCodec.codec ~ hCodec)
 }

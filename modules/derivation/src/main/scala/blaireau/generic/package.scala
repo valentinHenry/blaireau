@@ -5,7 +5,7 @@
 
 package blaireau
 
-import blaireau.metas.instances.AllMetaInstances
-import blaireau.syntax.MetaFieldSyntax
+import blaireau.generic.codec.ShapelessDerivation
+import blaireau.generic.codec.instances.AllCodecInstances
 
-object dsl extends AllMetaInstances with MetaFieldSyntax {}
+package object generic extends AllCodecInstances with ShapelessDerivation {}

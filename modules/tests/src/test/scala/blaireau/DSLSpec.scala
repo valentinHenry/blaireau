@@ -15,11 +15,10 @@ object DSLSpec extends App {
   val allSophiesInTheir30s = users
     .select("firstName", "lastName", "age")
     .where(t => t.firstName === "Sophie" && t.age >= 30 && t.age < 40)
-    .toQuery
 
   println(users.meta.metaFields)
-  println()
-  println(allSophiesInTheir30s.sql)
+  println(allSophiesInTheir30s.toQuery.sql)
+  println(allSophiesInTheir30s.queryIn)
 
   import skunk._
   val allUsers: Query[Void, User] = users.select.toInstanceQuery

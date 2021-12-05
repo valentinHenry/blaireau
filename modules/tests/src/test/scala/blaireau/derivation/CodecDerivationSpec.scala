@@ -5,7 +5,7 @@ import skunk.Codec
 
 class CodecDerivationSpec extends FunSuite {
   test("Can derive simple coded") {
-    import blaireau.generic.codec.auto._
+    import blaireau.generic._
 
     case class Simple(test: String)
 
@@ -15,7 +15,7 @@ class CodecDerivationSpec extends FunSuite {
   }
 
   test("Can derive nested codec") {
-    import blaireau.generic.codec.auto._
+    import blaireau.generic._
 
     case class Simple(test: String)
     case class NotSimple(ok: String, simple: Simple)
@@ -26,7 +26,7 @@ class CodecDerivationSpec extends FunSuite {
   }
 
   test("Can derive optional nested codec") {
-    import blaireau.generic.codec.auto._
+    import blaireau.generic._
 
     case class Simple(test: String)
     case class NotSimple(ok: String, simple: Option[Simple])
@@ -36,17 +36,16 @@ class CodecDerivationSpec extends FunSuite {
     assertEquals(c.types.map(_.toString()), List("text", "text"))
   }
 
-  test("Can semi-derive codec") {
-    import blaireau.generic.codec.semiauto._
-    import blaireau.generic.codec.instances.all._
+  test("Can derive nested codec with other types") {
+    import blaireau.generic._
 
-    case class Address(street: String, forest: String)
+    case class Simple(test: String)
+    implicit val simpleCodec: Codec[Simple] = varchar(16).gimap
 
-    case class Blaireau(name: String, age: Int, address: Address)
+    case class NotSimple(ok: String, simple: Option[Simple])
 
-    implicit val addressCodec: Codec[Address] = (varchar ~ varchar(16)).gimap[Address]
-    val c: Codec[Blaireau]                    = deriveCodec[Blaireau]
+    val c: Codec[NotSimple] = implicitly
 
-    assertEquals(c.types.map(_.toString()), List("text", "int4", "varchar", "varchar(16)"))
+    assertEquals(c.types.map(_.toString()), List("text", "varchar(16)"))
   }
 }

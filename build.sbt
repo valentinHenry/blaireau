@@ -43,8 +43,7 @@ lazy val `codec-derivation` = project
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.`skunk`,
-      Dependencies.`shapeless`,
-      Dependencies.`magnolia`
+      Dependencies.`shapeless`
     )
   )
   .enablePlugins(AutomateHeaderPlugin)
@@ -56,13 +55,11 @@ lazy val dsl = project
   .settings(
     libraryDependencies ++= Seq(
       Dependencies.`skunk`,
-      Dependencies.`shapeless`,
-      Dependencies.`magnolia`
+      Dependencies.`shapeless`
     )
   )
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
-  .dependsOn(`codec-derivation`)
 
 lazy val tests = project
   .in(file("modules/tests"))
