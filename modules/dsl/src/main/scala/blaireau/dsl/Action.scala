@@ -5,9 +5,8 @@
 
 package blaireau.dsl
 
-import skunk.syntax.StringContextOps
+import blaireau.dsl.utils.FragmentUtils
 import skunk.syntax.all._
-import skunk.util.Origin
 import skunk.{Codec, Fragment, Void, ~}
 
 sealed trait Action[A] { self =>
@@ -24,15 +23,7 @@ object Action {
   }
 
   sealed abstract class Op[A](op: String, fieldName: String) extends Action[A] {
-    override def toFragment: Fragment[A] =
-      StringContextOps.fragmentFromParts(
-        List(
-          StringContextOps.Str(s"$fieldName $op"),
-          StringContextOps.Par(codec.sql)
-        ),
-        codec,
-        Origin.unknown
-      )
+    override def toFragment: Fragment[A] = FragmentUtils.withValue(s"$fieldName $op ", codec)
   }
 
   sealed trait BooleanOp[A] extends Action[A] with Product with Serializable { self =>
