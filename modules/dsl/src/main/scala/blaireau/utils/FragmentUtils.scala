@@ -1,4 +1,4 @@
-package blaireau.dsl.utils
+package blaireau.utils
 
 import cats.data.State
 import cats.implicits.catsSyntaxEitherId

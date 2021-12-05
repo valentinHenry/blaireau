@@ -3,18 +3,24 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl
+package blaireau.syntax
 
+import blaireau.Action
 import blaireau.metas.MetaField
+
 import scala.language.implicitConversions
 
-package object syntax {
+trait MetaFieldSyntax {
+  import MetaFieldOps._
   implicit final def numericFieldSyntax[T: Numeric](f: MetaField[T]): NumericFieldOps[T] =
     new NumericFieldOps[T](f)
 
   implicit final def stringFieldSyntax(f: MetaField[String]): StringFieldOps[String] =
     new StringFieldOps[String](f)
 
+}
+
+object MetaFieldOps {
   class NumericFieldOps[T](f: MetaField[T]) {
     def ===(right: T): Action.BooleanEq[T] =
       Action.BooleanEq(f.sqlName, f.codec, right)

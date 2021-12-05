@@ -3,17 +3,15 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl
+package blaireau
 
-import blaireau.dsl.utils.FragmentUtils
 import blaireau.metas.{Meta, MetaField, TableSchema}
-import shapeless.labelled.{FieldType, KeyTag}
+import blaireau.utils.FragmentUtils
+import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Mapper, Reverse, RightReducer, ToList}
 import shapeless.{HList, Poly1, Poly2}
 import skunk.implicits.toStringOps
-import skunk.util.Twiddler
-import skunk.{Codec, Query}
-import skunk.~
+import skunk.{Codec, Query, ~}
 
 object metaFieldToCodec extends Poly1 {
   implicit def metaFieldCase[F]: Case.Aux[MetaField[F], Codec[F]]               = at(_.codec)
@@ -24,15 +22,29 @@ object codecReducer extends Poly2 {
   implicit def codecFolder[A, B]: Case.Aux[Codec[A], Codec[B], Codec[B ~ A]] = at((l, r) => r ~ l)
 }
 
-class SelectQueryBuilder[T, MT, MF <: HList, S <: HList, W](
+class SelectQueryBuilder[T, F <: HList, S <: HList, W](
   tableName: String,
-  meta: Meta.Aux[MT, MF],
+  meta: Meta.Aux[T, F],
   select: S,
   where: Action.BooleanOp[W]
 ) {
 
-  def where[A](f: TableSchema.Aux[MT, MF] => Action.BooleanOp[A]) =
-    new SelectQueryBuilder[T, MT, MF, S, A](tableName, meta, select, f(meta))
+  def where[A](f: TableSchema.Aux[T, F] => Action.BooleanOp[A]) =
+    new SelectQueryBuilder[T, F, S, A](tableName, meta, select, f(meta))
+
+  def toInstanceQuery(implicit
+    toList: ToList[S, MetaField[_]],
+    ev: S =:= F
+  ): Query[W, T] = {
+    val untypedFields  = select.toList[MetaField[_]]
+    val fieldsToSelect = untypedFields.map(_.sqlName).mkString(",")
+
+    val selectFromFragment = FragmentUtils.const(s"SELECT $fieldsToSelect FROM $tableName")
+
+    val filter = where.toFragment
+
+    sql"$selectFromFragment WHERE $filter".query[T](meta.codec)
+  }
 
   def toQuery[RS <: HList, MO <: HList, RO, TO](implicit
     toList: ToList[S, MetaField[_]],

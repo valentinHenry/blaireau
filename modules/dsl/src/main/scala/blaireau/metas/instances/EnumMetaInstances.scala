@@ -3,10 +3,10 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau
+package blaireau.metas.instances
 
-import shapeless.HNil
+import skunk.codec.EnumCodec
 
-package object metas {
-  type MetaS[T] = Meta.Aux[T, HNil]
+trait EnumMetaInstances extends EnumCodec {
+  //TODO
 }
