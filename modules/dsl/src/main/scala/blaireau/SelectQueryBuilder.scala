@@ -5,7 +5,7 @@
 
 package blaireau
 
-import blaireau.metas.{Meta, MetaField, TableSchema}
+import blaireau.metas.{Meta, MetaElt, MetaField}
 import blaireau.utils.FragmentUtils
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Mapper, Reverse, RightReducer, ToList}
@@ -22,19 +22,19 @@ object codecReducer extends Poly2 {
   implicit def codecFolder[A, B]: Case.Aux[Codec[A], Codec[B], Codec[B ~ A]] = at((l, r) => r ~ l)
 }
 
-class SelectQueryBuilder[T, F <: HList, S <: HList, W](
+class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, W](
   tableName: String,
-  meta: Meta.Aux[T, F],
+  meta: Meta.Aux[T, F, MF],
   select: S,
   where: Action.BooleanOp[W]
 ) {
 
-  def where[A](f: TableSchema.Aux[T, F] => Action.BooleanOp[A]) =
-    new SelectQueryBuilder[T, F, S, A](tableName, meta, select, f(meta))
+  def where[A](f: MetaElt.Aux[T, F] => Action.BooleanOp[A]) =
+    new SelectQueryBuilder[T, F, MF, S, A](tableName, meta, select, f(meta))
 
   def toInstanceQuery(implicit
     toList: ToList[S, MetaField[_]],
-    ev: S =:= F
+    ev: S =:= MF
   ): Query[W, T] = {
     val untypedFields  = select.toList[MetaField[_]]
     val fieldsToSelect = untypedFields.map(_.sqlName).mkString(",")

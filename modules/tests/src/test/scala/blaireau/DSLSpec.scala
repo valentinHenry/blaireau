@@ -14,7 +14,7 @@ object DSLSpec extends App {
 
   val allSophiesInTheir30s = users
     .select("firstName", "lastName", "age")
-    .where(t => t.firstName === "Sophie" && t.age >= 30 && t.age < 40)
+    .where(t => t.firstName === "Sophie" && t.age >= 30 && t.age < 40 && t.address.city === "Manchester")
 
   println(users.meta.metaFields)
   println(allSophiesInTheir30s.toQuery.sql)
@@ -24,12 +24,8 @@ object DSLSpec extends App {
   val allUsers: Query[Void, User] = users.select.toInstanceQuery
   println(allUsers.sql)
 
-// shapeless.ops.hlist.Mapper.Aux[blaireau.metaFieldToCodec.type,
-// blaireau.metas.MetaField[String] with shapeless.labelled.KeyTag[Symbol with shapeless.tag.Tagged[String("type")], blaireau.metas.MetaField[String]] ::
-// blaireau.metas.MetaField[String] with shapeless.labelled.KeyTag[Symbol with shapeless.tag.Tagged[String("name")], blaireau.metas.MetaField[String]] ::
-// blaireau.metas.MetaField[Int] with shapeless.labelled.KeyTag[Symbol with shapeless.tag.Tagged[String("age")],blaireau.metas.MetaField[Int]] ::
 // shapeless.HNil,MO
-// ]
+// Cannot prove that
 //  val allUsers = users.select.toQuery
 //  println(allUsers.sql)
 }

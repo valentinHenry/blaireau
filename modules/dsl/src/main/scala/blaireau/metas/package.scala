@@ -8,5 +8,5 @@ package blaireau
 import shapeless.HNil
 
 package object metas {
-  type MetaS[T] = Meta.Aux[T, HNil]
+  type MetaS[T] = Meta.Aux[T, HNil, HNil]
 }
