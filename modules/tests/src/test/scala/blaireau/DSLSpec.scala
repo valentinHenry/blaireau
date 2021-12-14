@@ -21,17 +21,9 @@ object DSLSpec extends App {
   println(allSophiesInTheir30s.toQuery.sql)
   println(allSophiesInTheir30s.queryIn)
 
-  //could not find implicit value for parameter flatten: blaireau.utils.SelectFlatten.Aux[(
-  // blaireau.metas.MetaField[String] ~
-  // blaireau.metas.MetaField[String] ~
-  // blaireau.metas.MetaField[String] ~
-  // blaireau.metas.MetaElt[blaireau.DSLSpec.Audit]{type F = blaireau.metas.MetaField[java.time.OffsetDateTime] with shapeless.labelled.KeyTag[Symbol with shapeless.tag.Tagged[String("cratedAt")],blaireau.metas.MetaField[java.time.OffsetDateTime]] :: blaireau.metas.MetaField[String] with shapeless.labelled.KeyTag[Symbol with shapeless.tag.Tagged[String("createdBy")],blaireau.metas.MetaField[String]] :: blaireau.metas.MetaField[java.time.OffsetDateTime] with shapeless.labelled.KeyTag[Symbol with shapeless.tag.Tagged[String("updatedAt")],blaireau.metas.MetaField[java.time.OffsetDateTime]] :: blaireau.metas.MetaField[String] with shapeless.labelled.KeyTag[Symbol with shapeless.tag.Tagged[String("updatedBy")],blaireau.metas.MetaField[String]] :: shapeless.HNil}) :: shapeless.HNil,FS]
+  val allUsers: Query[skunk.Void, User] = users.select.toQuery
+  println(allUsers.sql)
 
-//  val allUsers: Query[skunk.Void, User] = users.select.toInstanceQuery
-//  println(allUsers.sql)
-//
-// shapeless.HNil,MO
-// Cannot prove that
-//  val allUsers = users.select.toQuery
-//  println(allUsers.sql)
+  val allUsersQ = users.select.toQuery
+  println(allUsersQ.sql)
 }

@@ -7,15 +7,25 @@ package blaireau
 
 import blaireau.metas.{FieldProduct, Meta, MetaElt}
 import shapeless.HList
+import skunk.Codec
 
 class Table[T, F <: HList, MF <: HList](name: String, val meta: Meta.Aux[T, F, MF]) {
-  type SelectQuery[S <: HList] = SelectQueryBuilder[T, F, MF, S, skunk.Void]
-  private[this] def select[S <: HList](selects: S): SelectQuery[S] =
-    new SelectQueryBuilder[T, F, MF, S, skunk.Void](name, meta, selects, where = Action.BooleanOp.empty)
+  type SelectQuery[S <: HList, SC] = SelectQueryBuilder[T, F, MF, S, SC, skunk.Void]
+  private[this] def select[S <: HList, SC](selects: S, selectCodec: Codec[SC]): SelectQuery[S, SC] =
+    new SelectQueryBuilder[T, F, MF, S, SC, skunk.Void](
+      name,
+      meta,
+      selects,
+      selectCodec,
+      where = Action.BooleanOp.empty
+    )
 
-  def select: SelectQuery[MF] = select(meta.metaFields)
-  def select[O <: HList](s: MetaElt.Aux[T, F, MF] => FieldProduct.Aux[O]): SelectQuery[O] =
-    select(s(meta).metaFields)
+  def select: SelectQuery[MF, T] = select(meta.metaFields, meta.codec)
+
+  def select[MFO <: HList, OC](s: MetaElt.Aux[T, F, MF] => FieldProduct.Aux[OC, MFO]): SelectQuery[MFO, OC] = {
+    val selected = s(meta)
+    select(selected.metaFields, selected.codec)
+  }
 }
 
 object Table {

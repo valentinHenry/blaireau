@@ -22,26 +22,26 @@ object codecReducer extends Poly2 {
   implicit def codecFolder[A, B]: Case.Aux[Codec[A], Codec[B], Codec[B ~ A]] = at((l, r) => r ~ l)
 }
 
-class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, W](
+class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, SC, W](
   tableName: String,
   meta: Meta.Aux[T, F, MF],
   select: S,
+  selectCodec: Codec[SC],
   where: Action.BooleanOp[W]
 ) {
 
   def where[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
-    new SelectQueryBuilder[T, F, MF, S, A](tableName, meta, select, f(meta))
+    new SelectQueryBuilder[T, F, MF, S, SC, A](tableName, meta, select, selectCodec, f(meta))
 
   def whereAnd[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
-    new SelectQueryBuilder[T, F, MF, S, (W, A)](tableName, meta, select, where && f(meta))
+    new SelectQueryBuilder[T, F, MF, S, SC, (W, A)](tableName, meta, select, selectCodec, where && f(meta))
 
   def whereOr[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
-    new SelectQueryBuilder[T, F, MF, S, (W, A)](tableName, meta, select, where || f(meta))
+    new SelectQueryBuilder[T, F, MF, S, SC, (W, A)](tableName, meta, select, selectCodec, where || f(meta))
 
-  def toInstanceQuery(implicit
-    toList: ToList[S, MetaField[_]],
-    ev: S =:= MF
-  ): Query[W, T] = {
+  def toQuery[RS <: HList, MO <: HList, TO](implicit
+    toList: ToList[S, MetaField[_]]
+  ): Query[W, SC] = {
     val untypedFields  = select.toList[MetaField[_]]
     val fieldsToSelect = untypedFields.map(_.sqlName).mkString(",")
 
@@ -49,25 +49,7 @@ class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, W](
 
     val filter = where.toFragment
 
-    sql"$selectFromFragment WHERE $filter".query[T](meta.codec)
-  }
-
-  def toQuery[RS <: HList, MO <: HList, RO, TO](implicit
-    toList: ToList[S, MetaField[_]],
-    reverseS: Reverse.Aux[S, RS],
-    mapperEv: Mapper.Aux[metaFieldToCodec.type, RS, MO],
-    reducerEv: RightReducer.Aux[MO, codecReducer.type, Codec[RO]]
-  ): Query[W, RO] = {
-    val untypedFields  = select.toList[MetaField[_]]
-    val fieldsToSelect = untypedFields.map(_.sqlName).mkString(",")
-
-    val selectFromFragment = FragmentUtils.const(s"SELECT $fieldsToSelect FROM $tableName")
-
-    val filter = where.toFragment
-
-    val selectCodecs = select.reverse.map(metaFieldToCodec).reduceRight(codecReducer)
-
-    sql"$selectFromFragment WHERE $filter".query[RO](selectCodecs)
+    sql"$selectFromFragment WHERE $filter".query[SC](selectCodec)
   }
 
   def queryIn: W = where.elt

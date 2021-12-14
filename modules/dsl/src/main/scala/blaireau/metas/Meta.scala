@@ -18,23 +18,33 @@ import scala.language.{dynamics, implicitConversions}
 
 trait FieldProduct { self =>
   type MF <: HList
-  private[blaireau] def metaFields: MF
+  type T
 
-  def ~[RMF <: HList, OMF <: HList](
-    right: FieldProduct.Aux[RMF]
-  )(implicit prepend: Prepend.Aux[MF, RMF, OMF]): FieldProduct.Aux[OMF] =
+  private[blaireau] def metaFields: MF
+  private[blaireau] def codec: Codec[T]
+
+  def ~[RT, RMF <: HList, OT, OMF <: HList](
+    right: FieldProduct.Aux[RT, RMF]
+  )(implicit prepend: Prepend.Aux[MF, RMF, OMF]): FieldProduct.Aux[self.T ~ RT, OMF] =
     new FieldProduct {
       type MF = OMF
+      type T  = self.T ~ RT
       private[blaireau] override def metaFields: MF = self.metaFields ::: right.metaFields
+
+      private[blaireau] override def codec: Codec[T] = self.codec ~ right.codec
     }
 }
 object FieldProduct {
-  type Aux[MF0] = FieldProduct { type MF = MF0 }
+  type Aux[T0, MF0] = FieldProduct {
+    type T  = T0
+    type MF = MF0
+  }
 }
 
 // Representation of a db column.
 trait MetaField[H] extends FieldProduct { self =>
-  type MF = MetaField[H] :: HNil
+  override type MF = MetaField[H] :: HNil
+  override type T  = H
 
   private[blaireau] override def metaFields: MF = this :: HNil
 
@@ -46,7 +56,7 @@ trait MetaField[H] extends FieldProduct { self =>
 }
 
 // Representation of a group of db columns
-trait MetaElt[T] extends Dynamic with FieldProduct { self: Meta[T] =>
+trait MetaElt[A] extends Dynamic with FieldProduct { self: Meta[A] =>
   import shapeless.record._
   type F <: HList
   type MF <: HList
@@ -67,6 +77,7 @@ object MetaElt {
 trait Meta[A] extends MetaElt[A] { self =>
   type F <: HList
   type MF <: HList
+  override type T = A
 
   def codec: Codec[A]
   private[blaireau] def fields: F      // Representation of the object (MetaFields + MetaElts)
