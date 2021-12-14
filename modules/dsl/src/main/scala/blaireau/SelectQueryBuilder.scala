@@ -29,8 +29,14 @@ class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, W](
   where: Action.BooleanOp[W]
 ) {
 
-  def where[A](f: MetaElt.Aux[T, F] => Action.BooleanOp[A]) =
+  def where[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
     new SelectQueryBuilder[T, F, MF, S, A](tableName, meta, select, f(meta))
+
+  def whereAnd[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
+    new SelectQueryBuilder[T, F, MF, S, (W, A)](tableName, meta, select, where && f(meta))
+
+  def whereOr[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
+    new SelectQueryBuilder[T, F, MF, S, (W, A)](tableName, meta, select, where || f(meta))
 
   def toInstanceQuery(implicit
     toList: ToList[S, MetaField[_]],
