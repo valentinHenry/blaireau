@@ -5,7 +5,7 @@
 
 package blaireau.dsl.syntax
 
-import blaireau.dsl.Action
+import blaireau.dsl.actions.BooleanAction._
 import blaireau.metas.MetaField
 
 import scala.language.implicitConversions
@@ -22,42 +22,42 @@ trait MetaFieldSyntax {
 
 object MetaFieldOps {
   class NumericFieldOps[T](f: MetaField[T]) {
-    def ===(right: T): Action.BooleanEq[T] =
-      Action.BooleanEq(f.sqlName, f.codec, right)
+    def ===(right: T): BooleanEq[T] =
+      BooleanEq(f.sqlName, f.codec, right)
 
-    def <>(right: T): Action.BooleanNEq[T] =
-      Action.BooleanNEq(f.sqlName, f.codec, right)
+    def <>(right: T): BooleanNEq[T] =
+      BooleanNEq(f.sqlName, f.codec, right)
 
-    def >=(right: T): Action.BooleanGtEq[T] =
-      Action.BooleanGtEq(f.sqlName, f.codec, right)
+    def >=(right: T): BooleanGtEq[T] =
+      BooleanGtEq(f.sqlName, f.codec, right)
 
-    def >(right: T): Action.BooleanGt[T] =
-      Action.BooleanGt(f.sqlName, f.codec, right)
+    def >(right: T): BooleanGt[T] =
+      BooleanGt(f.sqlName, f.codec, right)
 
-    def <=(right: T): Action.BooleanLtEq[T] =
-      Action.BooleanLtEq(f.sqlName, f.codec, right)
+    def <=(right: T): BooleanLtEq[T] =
+      BooleanLtEq(f.sqlName, f.codec, right)
 
-    def <(right: T): Action.BooleanLt[T] =
-      Action.BooleanLt(f.sqlName, f.codec, right)
+    def <(right: T): BooleanLt[T] =
+      BooleanLt(f.sqlName, f.codec, right)
   }
 
   class StringFieldOps[T](f: MetaField[T]) {
-    def ===(right: T): Action.BooleanEq[T] =
-      Action.BooleanEq(f.sqlName, f.codec, right)
+    def ===(right: T): BooleanEq[T] =
+      BooleanEq(f.sqlName, f.codec, right)
 
-    def >=(right: T): Action.BooleanGtEq[T] =
-      Action.BooleanGtEq(f.sqlName, f.codec, right)
+    def >=(right: T): BooleanGtEq[T] =
+      BooleanGtEq(f.sqlName, f.codec, right)
 
-    def >(right: T): Action.BooleanGt[T] =
-      Action.BooleanGt(f.sqlName, f.codec, right)
+    def >(right: T): BooleanGt[T] =
+      BooleanGt(f.sqlName, f.codec, right)
 
-    def <=(right: T): Action.BooleanLtEq[T] =
-      Action.BooleanLtEq(f.sqlName, f.codec, right)
+    def <=(right: T): BooleanLtEq[T] =
+      BooleanLtEq(f.sqlName, f.codec, right)
 
-    def <(right: T): Action.BooleanLt[T] =
-      Action.BooleanLt(f.sqlName, f.codec, right)
+    def <(right: T): BooleanLt[T] =
+      BooleanLt(f.sqlName, f.codec, right)
 
-    def like(right: T): Action.BooleanLike[T] =
-      Action.BooleanLike(f.sqlName, f.codec, right)
+    def like(right: T): BooleanLike[T] =
+      BooleanLike(f.sqlName, f.codec, right)
   }
 }

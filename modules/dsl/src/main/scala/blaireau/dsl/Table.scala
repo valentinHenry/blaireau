@@ -5,6 +5,7 @@
 
 package blaireau.dsl
 
+import blaireau.dsl.actions.BooleanAction
 import blaireau.metas.{FieldProduct, Meta, MetaElt, MetaField}
 import shapeless.HList
 import shapeless.ops.hlist.ToList
@@ -20,7 +21,7 @@ class Table[T, F <: HList, MF <: HList](name: String, val meta: Meta.Aux[T, F, M
       meta,
       selects,
       selectCodec,
-      where = Action.BooleanOp.empty
+      where = BooleanAction.empty
     )
 
   def select(implicit

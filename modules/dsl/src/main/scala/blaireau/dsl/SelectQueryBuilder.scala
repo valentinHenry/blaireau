@@ -5,6 +5,7 @@
 
 package blaireau.dsl
 
+import blaireau.dsl.actions.BooleanAction
 import blaireau.metas.{Meta, MetaElt, MetaField}
 import blaireau.utils.FragmentUtils
 import cats.effect.MonadCancelThrow
@@ -30,16 +31,16 @@ class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, SC, W](
   meta: Meta.Aux[T, F, MF],
   select: S,
   selectCodec: Codec[SC],
-  where: Action.BooleanOp[W]
+  where: BooleanAction[W]
 )(implicit toList: ToList[S, MetaField[_]]) {
 
-  def where[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
+  def where[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]) =
     new SelectQueryBuilder[T, F, MF, S, SC, A](tableName, meta, select, selectCodec, f(meta))
 
-  def whereAnd[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
+  def whereAnd[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]) =
     new SelectQueryBuilder[T, F, MF, S, SC, (W, A)](tableName, meta, select, selectCodec, where && f(meta))
 
-  def whereOr[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
+  def whereOr[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]) =
     new SelectQueryBuilder[T, F, MF, S, SC, (W, A)](tableName, meta, select, selectCodec, where || f(meta))
 
   def toQuery[RS <: HList, MO <: HList, TO]: Query[W, SC] = {
