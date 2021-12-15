@@ -7,11 +7,14 @@ package blaireau.dsl
 
 import blaireau.metas.{Meta, MetaElt, MetaField}
 import blaireau.utils.FragmentUtils
+import cats.effect.MonadCancelThrow
+import cats.effect.kernel.Resource
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.ToList
 import shapeless.{HList, Poly1, Poly2}
 import skunk.implicits.toStringOps
-import skunk.{Codec, Query, ~}
+import skunk.{Codec, Cursor, Query, Session, ~}
+import cats.syntax.applicative._
 
 object metaFieldToCodec extends Poly1 {
   implicit def metaFieldCase[F]: Case.Aux[MetaField[F], Codec[F]]               = at(_.codec)
@@ -28,7 +31,7 @@ class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, SC, W](
   select: S,
   selectCodec: Codec[SC],
   where: Action.BooleanOp[W]
-) {
+)(implicit toList: ToList[S, MetaField[_]]) {
 
   def where[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
     new SelectQueryBuilder[T, F, MF, S, SC, A](tableName, meta, select, selectCodec, f(meta))
@@ -39,9 +42,7 @@ class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, SC, W](
   def whereOr[A](f: MetaElt.Aux[T, F, MF] => Action.BooleanOp[A]) =
     new SelectQueryBuilder[T, F, MF, S, SC, (W, A)](tableName, meta, select, selectCodec, where || f(meta))
 
-  def toQuery[RS <: HList, MO <: HList, TO](implicit
-    toList: ToList[S, MetaField[_]]
-  ): Query[W, SC] = {
+  def toQuery[RS <: HList, MO <: HList, TO]: Query[W, SC] = {
     val untypedFields  = select.toList[MetaField[_]]
     val fieldsToSelect = untypedFields.map(_.sqlName).mkString(",")
 
@@ -54,4 +55,18 @@ class SelectQueryBuilder[T, F <: HList, MF <: HList, S <: HList, SC, W](
 
   def queryIn: W = where.elt
 
+  def option[M[_]: MonadCancelThrow](s: Session[M]): M[Option[SC]] =
+    s.prepare(toQuery).use(_.option(queryIn))
+
+  def unique[M[_]: MonadCancelThrow](s: Session[M]): M[SC] =
+    s.prepare(toQuery).use(_.unique(queryIn))
+
+  def cursor[M[_]](s: Session[M]): Resource[M, Cursor[M, SC]] =
+    s.prepare(toQuery).flatMap(_.cursor(queryIn))
+
+  def pipe[M[_]: MonadCancelThrow](chunkSize: Int, s: Session[M]): M[fs2.Pipe[M, W, SC]] =
+    s.prepare(toQuery).use(_.pipe(chunkSize).pure[M])
+
+  def stream[M[_]: MonadCancelThrow](chunkSize: Int, s: Session[M]): M[fs2.Stream[M, SC]] =
+    s.prepare(toQuery).use(_.stream(queryIn, chunkSize).pure[M])
 }
