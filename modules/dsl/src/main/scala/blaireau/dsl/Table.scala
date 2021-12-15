@@ -3,7 +3,7 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau
+package blaireau.dsl
 
 import blaireau.metas.{FieldProduct, Meta, MetaElt}
 import shapeless.HList

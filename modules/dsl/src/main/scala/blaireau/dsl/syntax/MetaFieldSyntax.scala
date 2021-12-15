@@ -3,9 +3,9 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.syntax
+package blaireau.dsl.syntax
 
-import blaireau.Action
+import blaireau.dsl.Action
 import blaireau.metas.MetaField
 
 import scala.language.implicitConversions

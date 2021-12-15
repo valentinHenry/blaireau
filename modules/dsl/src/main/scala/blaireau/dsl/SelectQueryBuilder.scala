@@ -3,12 +3,12 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau
+package blaireau.dsl
 
 import blaireau.metas.{Meta, MetaElt, MetaField}
 import blaireau.utils.FragmentUtils
 import shapeless.labelled.FieldType
-import shapeless.ops.hlist.{Mapper, Reverse, RightReducer, ToList}
+import shapeless.ops.hlist.ToList
 import shapeless.{HList, Poly1, Poly2}
 import skunk.implicits.toStringOps
 import skunk.{Codec, Query, ~}

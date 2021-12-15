@@ -58,8 +58,8 @@ trait MetaField[H] extends FieldProduct { self =>
 // Representation of a group of db columns
 trait MetaElt[A] extends Dynamic with FieldProduct { self: Meta[A] =>
   import shapeless.record._
+  override type T = A
   type F <: HList
-  type MF <: HList
 
   def column(k: Witness)(implicit s: Selector[MF, k.T]): s.Out = metaFields.get(k)
 
@@ -68,15 +68,14 @@ trait MetaElt[A] extends Dynamic with FieldProduct { self: Meta[A] =>
 }
 
 object MetaElt {
-  type Aux[T, F0, MF0] = MetaElt[T] {
+  type Aux[T0, F0, MF0] = MetaElt[T0] {
+    type T  = T0
     type F  = F0
     type MF = MF0
   }
 }
 
 trait Meta[A] extends MetaElt[A] { self =>
-  type F <: HList
-  type MF <: HList
   override type T = A
 
   def codec: Codec[A]
@@ -85,6 +84,7 @@ trait Meta[A] extends MetaElt[A] { self =>
 
   def imap[B](f: A => B)(g: B => A): Meta.Aux[B, F, MF] =
     new Meta[B] {
+      override final type T  = B
       override final type F  = self.F
       override final type MF = self.MF
 
@@ -101,6 +101,7 @@ trait Meta[A] extends MetaElt[A] { self =>
 
 object Meta {
   type Aux[T0, F0, MF0] = Meta[T0] {
+    type T  = T0
     type F  = F0
     type MF = MF0
   }
