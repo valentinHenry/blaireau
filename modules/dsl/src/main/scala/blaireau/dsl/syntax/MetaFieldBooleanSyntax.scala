@@ -10,24 +10,28 @@ import blaireau.metas.MetaField
 
 import scala.language.implicitConversions
 
-trait MetaFieldSyntax {
+trait MetaFieldBooleanSyntax {
   import MetaFieldOps._
+  implicit final def metaFieldOpsSyntax[T](f: MetaField[T]): MetaFieldOps[T] =
+    new MetaFieldOps[T](f)
+
   implicit final def numericFieldSyntax[T: Numeric](f: MetaField[T]): NumericFieldOps[T] =
     new NumericFieldOps[T](f)
 
   implicit final def stringFieldSyntax(f: MetaField[String]): StringFieldOps[String] =
     new StringFieldOps[String](f)
-
 }
 
 object MetaFieldOps {
-  class NumericFieldOps[T](f: MetaField[T]) {
+  class MetaFieldOps[T](f: MetaField[T]) {
     def ===(right: T): BooleanEq[T] =
       BooleanEq(f.sqlName, f.codec, right)
 
     def <>(right: T): BooleanNEq[T] =
       BooleanNEq(f.sqlName, f.codec, right)
+  }
 
+  class NumericFieldOps[T](f: MetaField[T]) {
     def >=(right: T): BooleanGtEq[T] =
       BooleanGtEq(f.sqlName, f.codec, right)
 
@@ -42,9 +46,6 @@ object MetaFieldOps {
   }
 
   class StringFieldOps[T](f: MetaField[T]) {
-    def ===(right: T): BooleanEq[T] =
-      BooleanEq(f.sqlName, f.codec, right)
-
     def >=(right: T): BooleanGtEq[T] =
       BooleanGtEq(f.sqlName, f.codec, right)
 

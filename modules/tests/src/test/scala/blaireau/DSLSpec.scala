@@ -33,4 +33,12 @@ object DSLSpec extends App {
 
   val allUsersQ = users.select.toQuery
   println(allUsersQ.sql)
+
+  val changeSophiesNameToSophia = users
+    .update(e => (e.firstName := "Sophia") <+> (e.age += 6))
+    .where(_.firstName === "Sophie")
+    .whereAnd(_.lastName <> "Dupond")
+
+  println(changeSophiesNameToSophia.toCommand.sql)
+  println(changeSophiesNameToSophia.commandIn)
 }
