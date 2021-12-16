@@ -14,19 +14,19 @@ import skunk.data.Completion
 import skunk.implicits.toStringOps
 import skunk.{Command, Session, ~}
 
-class UpdateQueryBuilder[T, F <: HList, MF <: HList, U, W](
+class UpdateQueryBuilder[T, F <: HList, MF <: HList, EF <: HList, U, W](
   tableName: String,
-  meta: Meta.Aux[T, F, MF],
+  meta: Meta.Aux[T, F, MF, EF],
   updatedFields: AssignmentAction[U],
   where: BooleanAction[W]
 ) {
-  def where[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): UpdateQueryBuilder[T, F, MF, U, A] =
+  def where[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): UpdateQueryBuilder[T, F, MF, EF, U, A] =
     new UpdateQueryBuilder(tableName, meta, updatedFields, f(meta))
 
-  def whereAnd[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): UpdateQueryBuilder[T, F, MF, U, (W, A)] =
+  def whereAnd[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): UpdateQueryBuilder[T, F, MF, EF, U, (W, A)] =
     new UpdateQueryBuilder(tableName, meta, updatedFields, where && f(meta))
 
-  def whereOr[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): UpdateQueryBuilder[T, F, MF, U, (W, A)] =
+  def whereOr[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): UpdateQueryBuilder[T, F, MF, EF, U, (W, A)] =
     new UpdateQueryBuilder(tableName, meta, updatedFields, where || f(meta))
 
   def toCommand: Command[U ~ W] = {

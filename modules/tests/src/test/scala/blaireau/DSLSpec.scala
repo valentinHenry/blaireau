@@ -1,18 +1,42 @@
 package blaireau
 
-import skunk.{Query, ~}
 import blaireau.dsl._
+import skunk.{Query, ~}
 
 import java.time.OffsetDateTime
+import java.util.UUID
 
 object DSLSpec extends App {
 
-  final case class Audit(cratedAt: OffsetDateTime, createdBy: String, updatedAt: OffsetDateTime, updatedBy: String)
+  final case class Audit(createdAt: OffsetDateTime, createdBy: String, updatedAt: OffsetDateTime, updatedBy: String)
   final case class Address(street: String, postalCode: String, city: String, country: String)
   final case class Simple(i: Int, j: Long)
-  final case class User(firstName: String, lastName: String, age: Int, address: Address, audit: Audit, simple: Simple)
+  final case class User(
+    id: UUID,
+    firstName: String,
+    lastName: String,
+    age: Int,
+    address: Address,
+    audit: Audit,
+    simple: Simple
+  )
 
   val users = Table[User]("users")
+
+  val u =
+    User(
+      UUID.randomUUID(),
+      "FN",
+      "LN",
+      0,
+      Address("STR", "PC", "CT", "C"),
+      Audit(OffsetDateTime.now(), "Me", OffsetDateTime.now(), "Me"),
+      Simple(1, 2L)
+    )
+
+  val updateFullUser = users.update(u).where(_.id === u.id)
+  println(updateFullUser.toCommand.sql)
+  println(updateFullUser.commandIn)
 
   val allSophiesInTheir30s = users
     .select(e => e.firstName ~ e.lastName ~ e.address.street ~ e.audit)
@@ -41,4 +65,5 @@ object DSLSpec extends App {
 
   println(changeSophiesNameToSophia.toCommand.sql)
   println(changeSophiesNameToSophia.commandIn)
+
 }

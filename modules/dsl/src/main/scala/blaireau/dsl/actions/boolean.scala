@@ -5,6 +5,10 @@
 
 package blaireau.dsl.actions
 
+import blaireau.dsl.actions.BooleanAction.{BooleanEq, BooleanNEq}
+import blaireau.dsl.syntax.MetaFieldBooleanSyntax
+import blaireau.metas.Meta.ExtractedField
+import shapeless.{Poly1, Poly2}
 import skunk.implicits.{toIdOps, toStringOps}
 import skunk.{Codec, Fragment, Void, ~}
 
@@ -62,4 +66,17 @@ object BooleanAction {
   final case class BooleanLtEq[A](sqlField: String, codec: Codec[A], elt: A)
       extends Action.Op[A]("<", sqlField)
       with BooleanAction[A]
+}
+
+object booleanEqMapper extends Poly1 with MetaFieldBooleanSyntax {
+  implicit def mapper[A]: Case.Aux[ExtractedField[A], BooleanEq[A]] = at { case (field, elt) => field === elt }
+}
+
+object booleanNEqMapper extends Poly1 with MetaFieldBooleanSyntax {
+  implicit def mapper[A]: Case.Aux[ExtractedField[A], BooleanNEq[A]] = at { case (field, elt) => field <> elt }
+}
+
+object fieldBooleanAndFolder extends Poly2 {
+  implicit def folder[A, B]: Case.Aux[BooleanAction[A], BooleanAction[B], BooleanAction[A ~ B]] =
+    at(_ && _)
 }

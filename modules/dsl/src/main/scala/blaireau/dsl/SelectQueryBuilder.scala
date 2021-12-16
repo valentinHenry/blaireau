@@ -15,22 +15,22 @@ import shapeless.HList
 import skunk.implicits.toStringOps
 import skunk.{Codec, Cursor, Query, Session}
 
-class SelectQueryBuilder[T, F <: HList, MF <: HList, SC, W](
+class SelectQueryBuilder[T, F <: HList, MF <: HList, EF <: HList, SC, W](
   tableName: String,
-  meta: Meta.Aux[T, F, MF],
+  meta: Meta.Aux[T, F, MF, EF],
   select: List[String],
   selectCodec: Codec[SC],
   where: BooleanAction[W]
 ) {
 
-  def where[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, SC, A] =
-    new SelectQueryBuilder[T, F, MF, SC, A](tableName, meta, select, selectCodec, f(meta))
+  def where[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, A] =
+    new SelectQueryBuilder[T, F, MF, EF, SC, A](tableName, meta, select, selectCodec, f(meta))
 
-  def whereAnd[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, SC, (W, A)] =
-    new SelectQueryBuilder[T, F, MF, SC, (W, A)](tableName, meta, select, selectCodec, where && f(meta))
+  def whereAnd[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, (W, A)] =
+    new SelectQueryBuilder[T, F, MF, EF, SC, (W, A)](tableName, meta, select, selectCodec, where && f(meta))
 
-  def whereOr[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, SC, (W, A)] =
-    new SelectQueryBuilder[T, F, MF, SC, (W, A)](tableName, meta, select, selectCodec, where || f(meta))
+  def whereOr[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, (W, A)] =
+    new SelectQueryBuilder[T, F, MF, EF, SC, (W, A)](tableName, meta, select, selectCodec, where || f(meta))
 
   def toQuery: Query[W, SC] = {
     val fieldsToSelect = select.mkString(",")

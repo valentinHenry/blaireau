@@ -21,8 +21,9 @@ trait AllMetaInstances
     with TemporalMetaInstances
 
 trait CodecDerivation {
-  implicit final def deriveOptionalMetaType[T, F <: HList, MF <: HList](implicit
-    m: Meta.Aux[T, F, MF]
-  ): Meta.Aux[Option[T], F, MF] =
-    Meta(m.codec.opt, m.fields, m.metaFields)
+  //FIXME EF is not right
+//  implicit final def deriveOptionalMetaType[T, F <: HList, MF <: HList, EF <: HList](implicit
+//    m: Meta.Aux[T, F, MF, EF]
+//  ): Meta.Aux[Option[T], F, MF, Option[EF]] =
+//    Meta(m.codec.opt, m.fields, m.metaFields)(_.map(m.extract))
 }
