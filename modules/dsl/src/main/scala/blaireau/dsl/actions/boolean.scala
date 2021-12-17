@@ -5,7 +5,6 @@
 
 package blaireau.dsl.actions
 
-import blaireau.dsl.actions.BooleanAction.{BooleanEq, BooleanNEq}
 import blaireau.dsl.syntax.MetaFieldBooleanSyntax
 import blaireau.metas.Meta.ExtractedField
 import shapeless.{Poly1, Poly2}
@@ -25,6 +24,13 @@ sealed trait BooleanAction[A] extends Action[A] with Product with Serializable {
       self.codec ~ right.codec,
       self.elt ~ right.elt,
       sql"(${self.toFragment} OR ${right.toFragment})"
+    )
+
+  def imap[B](f: A => B)(g: B => A): BooleanAction[B] =
+    ForgedBoolean(
+      self.codec.imap(f)(g),
+      f(self.elt),
+      self.toFragment.contramap(g)
     )
 }
 
@@ -69,14 +75,19 @@ object BooleanAction {
 }
 
 object booleanEqMapper extends Poly1 with MetaFieldBooleanSyntax {
-  implicit def mapper[A]: Case.Aux[ExtractedField[A], BooleanEq[A]] = at { case (field, elt) => field === elt }
+  implicit def mapper[A]: Case.Aux[ExtractedField[A], BooleanAction[A]] = at { case (field, elt) => field === elt }
 }
 
 object booleanNEqMapper extends Poly1 with MetaFieldBooleanSyntax {
-  implicit def mapper[A]: Case.Aux[ExtractedField[A], BooleanNEq[A]] = at { case (field, elt) => field <> elt }
+  implicit def mapper[A]: Case.Aux[ExtractedField[A], BooleanAction[A]] = at { case (field, elt) => field <> elt }
 }
 
-object fieldBooleanAndFolder extends Poly2 {
+object actionBooleanAndFolder extends Poly2 {
   implicit def folder[A, B]: Case.Aux[BooleanAction[A], BooleanAction[B], BooleanAction[A ~ B]] =
     at(_ && _)
+}
+
+object actionBooleanOrFolder extends Poly2 {
+  implicit def folder[A, B]: Case.Aux[BooleanAction[A], BooleanAction[B], BooleanAction[A ~ B]] =
+    at(_ || _)
 }

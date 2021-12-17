@@ -6,7 +6,7 @@
 package blaireau.dsl
 
 import blaireau.dsl.actions.BooleanAction
-import blaireau.metas.{Meta, MetaElt}
+import blaireau.metas.Meta
 import blaireau.utils.FragmentUtils
 import cats.effect.MonadCancelThrow
 import cats.effect.kernel.Resource
@@ -23,13 +23,13 @@ class SelectQueryBuilder[T, F <: HList, MF <: HList, EF <: HList, SC, W](
   where: BooleanAction[W]
 ) {
 
-  def where[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, A] =
+  def where[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, A] =
     new SelectQueryBuilder[T, F, MF, EF, SC, A](tableName, meta, select, selectCodec, f(meta))
 
-  def whereAnd[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, (W, A)] =
+  def whereAnd[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, (W, A)] =
     new SelectQueryBuilder[T, F, MF, EF, SC, (W, A)](tableName, meta, select, selectCodec, where && f(meta))
 
-  def whereOr[A](f: MetaElt.Aux[T, F, MF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, (W, A)] =
+  def whereOr[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, (W, A)] =
     new SelectQueryBuilder[T, F, MF, EF, SC, (W, A)](tableName, meta, select, selectCodec, where || f(meta))
 
   def toQuery: Query[W, SC] = {

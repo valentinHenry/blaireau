@@ -10,7 +10,7 @@ import blaireau.metas.Meta.ExtractedField
 import blaireau.utils.FragmentUtils
 import shapeless.{Poly1, Poly2}
 import skunk.implicits.toStringOps
-import skunk.{Codec, Fragment, ~}
+import skunk.{Codec, Fragment, Void, ~}
 
 sealed trait AssignmentAction[A] extends Action[A] with Product with Serializable { self =>
   def <+>[B](right: AssignmentAction[B]): AssignmentAction[A ~ B] =
@@ -27,6 +27,8 @@ private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: 
 }
 
 object AssignmentAction {
+  private[blaireau] def empty: AssignmentAction[Void] = ForgedAssignment(Void.codec, Void, Fragment.empty)
+
   case class AssignmentOp[A](sqlField: String, codec: Codec[A], elt: A)
       extends Action.Op[A]("=", sqlField)
       with AssignmentAction[A]
@@ -44,7 +46,7 @@ object assignmentMapper extends Poly1 with MetaFieldAssignmentSyntax {
   implicit def mapper[A]: Case.Aux[ExtractedField[A], AssignmentAction[A]] = at { case (field, elt) => field := elt }
 }
 
-object fieldAssignmentFolder extends Poly2 {
+object actionAssignmentFolder extends Poly2 {
   implicit def folder[A, B]: Case.Aux[AssignmentAction[A], AssignmentAction[B], AssignmentAction[A ~ B]] =
     at(_ <+> _)
 }

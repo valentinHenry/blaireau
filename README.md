@@ -17,6 +17,7 @@
         + [Example](#example-1)
     * [Update](#update)
         + [Update DSL](#update-dsl)
+        + [Commands](#commands)
 ## Quickstart with sbt
 If you want to test / have fun with it, no artefacts is published at the moment therefore you must publish it locally
 ```shell
@@ -115,6 +116,9 @@ val users = Table[User]("users")
 
 We will be using the table above for all following examples.
 
+TODO: override field names
+TODO: change fields names format (camelcase ...)
+
 ### Select
 Only simple select queries can be generated using **Blaireau**, for more advance ones, it is better to use **Skunk** sql interpolator.
 
@@ -151,11 +155,10 @@ A Where clause can be created using boolean operators:
 
 |  Type Constraint  | Scala |     Postgresql    | Blaireau |
 |:-----------------:|:-----:|:-----------------:|:--------:|
-|        Any        |   ==  |         =         |    :=    |
-|      Numeric      |   -=  | field = field - _ |    -=    |
-|      Numeric      |   +=  | field = field + _ |    +=    |
 |        Any        |   ==  |         =         |    ===   |
+|        Any        |       |                   |    =~=   |
 |        Any        |   !=  |         <>        |    <>    |
+|        Any        |       |                   |    =!=   |
 | Numeric \| String |   <   |         <         |     <    |
 | Numeric \| String |   <=  |         <=        |    <=    |
 | Numeric \| String |   >   |         >         |     >    |
@@ -173,11 +176,39 @@ The classes fields are accessed using their scala names (regardless of the forma
 
 The `Where` clause can be composed using `whereAnd(...)` and `whereOr(...)` functions after the first `where(...)`.
 
+The operators `===`, `=~=`, `<>` and `=!=` are both compatible with nested objects applying the operator on all fields.
+
+The difference between `<>` and `=!=`: the first one returns true if one of the field is not the same, the later
+checks for a full inequality.
+
+The difference between `=~=` and `===`: the first one returns true if one of the field is the same, the latter checks
+for full equality.
+
 Examples:
 ```scala
 val findById = users.select.where(_.id === id)...
 
+val rueDuChateauAddress = Address("15 Rue du Château", "33000", "Bordeaux", "France")
+val findUsersLivingAtTheAddress = users.select.where(_.address === rueDuChateauAddress)
+// SELECT * FROM users WHERE street = $1 && postalCode = $2 && city = $3 && country = $4
+// $1 = "15 Rue du Château"
+// $2 = "33000"
+// $3 = "Bordeaux"
+// $4 = "France"
+
+val findAllOtherUsers = users.select.where(_.address <> rueDuChateauAddress)
+// SELECT * FROM users WHERE street <> $1 || postalCode <> $2 || city <> $3 || country = $4
+// $1 = ...
+
+val finaAllUsersNotLivingAnywhereRessemblingTheAddress = users.select.where(_.address =!= rueDuChateauAddress)
+// SELECT * FROM users WHERE street <> $1 && postalCode <> $2 && city <> $3 && country = $4
+// $1 = ...
+
+
 val allLuciesOver30LivingInParis = users.select.where(e => e.address.city === "Paris" && e.age >= 30)
+// SELECT * FROM users WHERE city = $1 && age >= $2
+// $1 = "Paris"
+// $2 = 30
 ```
 
 #### Querying
@@ -220,20 +251,68 @@ final class UsersSql[F[_]: MonadCancelThrow](s: Session[F]){
   def findByEmail(email: String): F[Option[User]] =
     users.select.where(_.email === email).option(s)
     
-  def findAllEmailsOfPeopleOverTheAgeOF(age: Int): F[fs2.Stream[F, String]] =
+  def findAllEmailsOfPeopleOverTheAgeOf(age: Int): F[fs2.Stream[F, String]] =
     users.select(_.email).where(_.age > age).stream(s)
   // SELECT email FROM users WHERE age > $1 
   // $1 = age
 }
 ```
 
+TODO: creating own operators
+
 ### Update
-WIP
+
 #### Update DSL
-An Update clause can be created using the following assignment operators:
+
+The Table's `update` function can take different arguments:
+An accumulation of assignments with the operators below:
 
 |        Type       | Scala |     Postgresql    | Blaireau |
 |:-----------------:|:-----:|:-----------------:|:--------:|
-|        Any        |   ==  |         =         |    :=    |
+|        Any        |   =   |         =         |    :=    |
 |      Numeric      |   -=  | field = field - _ |    -=    |
 |      Numeric      |   +=  | field = field + _ |    +=    |
+
+These assignments are combined using the `<+>` operator.
+
+```scala
+val updateFullName(id: UUID, firstName: String, lastName: String) = 
+  users.update(u => (u.firstName := firstName) <+> (u.lastName := lastName)).where(_.id === id).command
+```
+
+Full class / embedded class is also supported
+
+```scala
+def updateAddress(id: UUID, address: Address) =
+  users.update(_.address := address).where(_.id === id)
+  
+def updateFullUser1(user: User) = 
+  users.update(_ := user).where(_.id === user.id)
+  
+def updateFullUser2(user: User) =
+  users.update(user).where(_.id === user)
+```
+
+As you can see above, when the full class is updates, you can omit the `:=` operator.
+
+If you want to know more about the `where` function, it has the same dsl as the [Select's where](#where-dsl).
+
+#### Commands
+Once your `update` function fits your needs, you have three functions which you can use.
+
+The `toCommand` function returns a **Skunk** `Command[...]`
+```scala
+case class Three(four: Long)
+case class Test(one: Int, two: String, three: Three)
+```
+
+The `commandIn` function returns the input parameters of the Command
+```scala
+???
+```
+
+The `execute` function executed the command with the given `Session`
+```scala
+def updateUser(u: User): F[Completion] =
+  users.update(u).where(_.id === u.id).execute(s)
+```

@@ -55,33 +55,19 @@ trait MetaField[H] extends FieldProduct { self =>
   override def toString: String = s"MetaField($sqlName:$name:$codec)"
 }
 
-// Representation of a group of db columns
-trait MetaElt[A] extends Dynamic with FieldProduct { self: Meta[A] =>
+trait Meta[A] extends FieldProduct with Dynamic { self =>
   import shapeless.record._
-  override type T = A
-  type F <: HList
-
-  def column(k: Witness)(implicit s: Selector[MF, k.T]): s.Out = metaFields.get(k)
 
   // TODO macro: replace select dynamic by functions of the present fields (to help idea + the user)
-  def selectDynamic(k: String)(implicit s: Selector[F, Symbol @@ k.type]): s.Out = fields.record.selectDynamic(k)
-}
 
-object MetaElt {
-  type Aux[T0, F0, MF0] = MetaElt[T0] {
-    type T  = T0
-    type F  = F0
-    type MF = MF0
-  }
-}
-
-trait Meta[A] extends MetaElt[A] { self =>
   override type T = A
-  type UT <: HList
+  type F <: HList
   type EF <: HList // Extracted Fields ex: (MetaField[F1] -> F1) :: (MetaField[F2] -> F2) :: ... :: HNil
+  type MF <: HList
+  type UT <: HList
 
   def codec: Codec[A]
-  private[blaireau] def fields: F      // Representation of the object (MetaFields + MetaElts)
+  private[blaireau] def fields: F      // Representation of the object (MetaFields + Metas)
   private[blaireau] def metaFields: MF // fields in the sql
 
   def imap[B](f: A => B)(g: B => A): Meta.Aux[B, F, MF, EF] =
@@ -104,10 +90,12 @@ trait Meta[A] extends MetaElt[A] { self =>
   override def toString: String = s"Meta($codec, $metaFields)"
 
   private[blaireau] def extract(t: T): EF
+
+  def selectDynamic(k: String)(implicit s: Selector[F, Symbol @@ k.type]): s.Out = fields.record.selectDynamic(k)
 }
 
 object Meta {
-  type Aux[T0, F0, MF0, EF0] = Meta[T0] {
+  type Aux[T0, F0 <: HList, MF0 <: HList, EF0 <: HList] = Meta[T0] {
     type T  = T0
     type F  = F0
     type MF = MF0
@@ -201,14 +189,14 @@ object Meta {
     ): Meta0.Aux[
       FieldType[K, H] :: HNil,
       H,
-      FieldType[K, MetaElt.Aux[H, HF, HMF]] :: HNil,
+      FieldType[K, Meta.Aux[H, HF, HMF, HEF]] :: HNil,
       HMF,
       HEF
     ] = {
       val meta = hMeta.value
 
       Meta0(
-        Meta[H, FieldType[K, MetaElt.Aux[H, HF, HMF]] :: HNil, HMF, HEF](
+        Meta[H, FieldType[K, Meta.Aux[H, HF, HMF, HEF]] :: HNil, HMF, HEF](
           meta.codec,
           field[K](meta) :: HNil,
           meta.metaFields
@@ -289,13 +277,13 @@ object Meta {
       previous: Meta0.Aux[B, BM, BF, BMF, BEF],
       lMeta: Lazy[Meta.Aux[L, LF, LMF, LEF]],
       nonEmptyLF: Last[LF],
-      fPrepend: Prepend.Aux[BF, FieldType[K, MetaElt.Aux[L, LF, LMF]] :: HNil, AF],
+      fPrepend: Prepend.Aux[BF, FieldType[K, Meta.Aux[L, LF, LMF, LEF]] :: HNil, AF],
       mfPrepend: Prepend.Aux[BMF, LMF, AMF],
       efPrepend: Prepend.Aux[BEF, LEF, AEF]
     ): Meta0.Aux[A, BM ~ L, AF, AMF, AEF] = {
-      val meta: Meta.Aux[L, LF, LMF, LEF]                = lMeta.value
-      val metaElt: FieldType[K, MetaElt.Aux[L, LF, LMF]] = field[K](meta)
-      val codec: Codec[BM ~ L]                           = previous.meta.codec ~ meta.codec
+      val meta: Meta.Aux[L, LF, LMF, LEF]                  = lMeta.value
+      val metaElt: FieldType[K, Meta.Aux[L, LF, LMF, LEF]] = field[K](meta)
+      val codec: Codec[BM ~ L]                             = previous.meta.codec ~ meta.codec
 
       Meta0(
         Meta(

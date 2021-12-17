@@ -5,8 +5,8 @@
 
 package blaireau.dsl
 
-import blaireau.dsl.actions.{AssignmentAction, BooleanAction, assignmentMapper, fieldAssignmentFolder}
-import blaireau.metas.{FieldProduct, Meta, MetaElt, MetaField}
+import blaireau.dsl.actions.{AssignmentAction, BooleanAction, actionAssignmentFolder, assignmentMapper}
+import blaireau.metas.{FieldProduct, Meta, MetaField}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper, ToList}
 import skunk.Codec
@@ -28,25 +28,25 @@ class Table[T, F <: HList, MF <: HList, EF <: HList](name: String, val meta: Met
     toList: ToList[MF, MetaField[_]]
   ): SelectQuery[MF, T] = select(meta.metaFields, meta.codec)
 
-  def select[MFO <: HList, OC](s: MetaElt.Aux[T, F, MF] => FieldProduct.Aux[OC, MFO])(implicit
+  def select[MFO <: HList, OC](s: Meta.Aux[T, F, MF, EF] => FieldProduct.Aux[OC, MFO])(implicit
     toList: ToList[MFO, MetaField[_]]
   ): SelectQuery[MFO, OC] = {
     val selected = s(meta)
     select(selected.metaFields, selected.codec)
   }
 
-  type UpdateCommand[U] = UpdateQueryBuilder[T, F, MF, EF, U, skunk.Void]
+  type UpdateCommand[U] = UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void]
   private[this] def update[U](updates: AssignmentAction[U]): UpdateCommand[U] =
-    new UpdateQueryBuilder[T, F, MF, EF, U, skunk.Void](name, meta, updates, BooleanAction.empty)
+    new UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void](name, meta, updates, BooleanAction.empty)
 
   def update[MEF <: HList, LRO, UF](elt: T)(implicit
     m: Mapper.Aux[assignmentMapper.type, EF, MEF],
-    r: LeftReducer.Aux[MEF, fieldAssignmentFolder.type, LRO],
+    r: LeftReducer.Aux[MEF, actionAssignmentFolder.type, LRO],
     ev: LRO =:= AssignmentAction[UF]
   ): UpdateCommand[UF] =
-    update(meta.extract(elt).map(assignmentMapper).reduceLeft(fieldAssignmentFolder))
+    update(meta := elt)
 
-  def update[U](u: MetaElt.Aux[T, F, MF] => AssignmentAction[U]): UpdateCommand[U] =
+  def update[U](u: Meta.Aux[T, F, MF, EF] => AssignmentAction[U]): UpdateCommand[U] =
     update(u(meta))
 }
 

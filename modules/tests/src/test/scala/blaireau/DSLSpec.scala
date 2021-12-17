@@ -1,7 +1,7 @@
 package blaireau
 
 import blaireau.dsl._
-import skunk.{Query, ~}
+import skunk.{Command, Query, ~}
 
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -34,9 +34,17 @@ object DSLSpec extends App {
       Simple(1, 2L)
     )
 
-  val updateFullUser = users.update(u).where(_.id === u.id)
-  println(updateFullUser.toCommand.sql)
-  println(updateFullUser.commandIn)
+  val allPeopleLivingInThisAddress = users.select
+    .where(e => e.address === Address("Grande rue", "33000", "Bordeaux", "France"))
+
+  println(allPeopleLivingInThisAddress.toQuery.sql)
+  println(allPeopleLivingInThisAddress.queryIn)
+
+  val allPeopleNotLivingInThisAddress = users.select
+    .where(e => e.address <> Address("Grande rue", "33000", "Bordeaux", "France"))
+
+  println(allPeopleNotLivingInThisAddress.toQuery.sql)
+  print(allPeopleNotLivingInThisAddress.queryIn)
 
   val allSophiesInTheir30s = users
     .select(e => e.firstName ~ e.lastName ~ e.address.street ~ e.audit)
@@ -66,4 +74,20 @@ object DSLSpec extends App {
   println(changeSophiesNameToSophia.toCommand.sql)
   println(changeSophiesNameToSophia.commandIn)
 
+  val updateFullUser = users.update(u).where(_.id === u.id)
+  println(updateFullUser.toCommand.sql)
+  println(updateFullUser.commandIn)
+
+  val updateUserAddress = users
+    .update(_.address := Address("Grande rue", "33000", "Bordeaux", "France"))
+    .where(_.id === u.id)
+
+  println(updateUserAddress.toCommand.sql)
+  println(updateUserAddress.commandIn)
+
+  case class Test(one: Int, two: String, three: Long)
+
+  val tests                           = Table[Test]("tests")
+  val t                               = Test(1, "two", 3L)
+  val updateTest: Command[Test ~ Int] = tests.update(t).where(_.one === 1).toCommand
 }
