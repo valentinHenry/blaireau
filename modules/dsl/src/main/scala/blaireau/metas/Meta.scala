@@ -5,8 +5,9 @@
 
 package blaireau.metas
 
+import blaireau.dsl.actions.{Action, IMapper}
 import shapeless.labelled.{FieldType, field}
-import shapeless.ops.hlist.{Init, Last, Prepend}
+import shapeless.ops.hlist.{Init, Last, LeftReducer, Mapper, Prepend}
 import shapeless.ops.record.Selector
 import shapeless.tag.@@
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
@@ -96,6 +97,26 @@ trait Meta[A] extends FieldProduct with Dynamic { self =>
 }
 
 object Meta {
+  def applyFn[MFun, LRFun, A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO, OutT[_]](
+    meta: Meta.Aux[A, F, MF, EF],
+    elt: A
+  )(implicit
+    mapper: Mapper.Aux[MFun, EF, MO],
+    reducer: LeftReducer.Aux[MO, LRFun, FO],
+    ev: FO =:= OutT[CO],
+    tw: Twiddler.Aux[A, CO],
+    im: IMapper[OutT, CO]
+  ): OutT[A] =
+    im.imap(
+      ev(
+        reducer(
+          mapper(
+            meta.extract(elt)
+          )
+        )
+      )
+    )(tw.from)(tw.to)
+
   type Aux[T0, F0 <: HList, MF0 <: HList, EF0 <: HList] = Meta[T0] {
     type T  = T0
     type F  = F0

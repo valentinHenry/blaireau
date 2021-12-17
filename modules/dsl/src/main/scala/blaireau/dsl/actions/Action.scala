@@ -6,6 +6,7 @@
 package blaireau.dsl.actions
 
 import blaireau.utils.FragmentUtils
+import cats.Id
 import skunk.{Codec, Fragment, Void}
 
 trait Action[A] { self =>
@@ -15,13 +16,11 @@ trait Action[A] { self =>
 }
 
 object Action {
-  def empty: Action[Void] = new Action[Void] {
-    override def codec: Codec[Void]         = Void.codec
-    override def elt: Void                  = Void
-    override def toFragment: Fragment[Void] = Fragment.empty
-  }
-
   abstract class Op[A](op: String, fieldName: String) extends Action[A] {
     override def toFragment: Fragment[A] = FragmentUtils.withValue(s"$fieldName $op ", codec)
   }
+}
+
+trait IMapper[M[_], A] {
+  def imap[B](m: M[A])(f: A => B)(g: B => A): M[B]
 }

@@ -22,13 +22,6 @@ sealed trait AssignmentAction[A] extends Action[A] with Product with Serializabl
       (self.elt, right.elt),
       sql"${self.toFragment}, ${right.toFragment}"
     )
-
-  def imap[B](f: A => B)(g: B => A): AssignmentAction[B] =
-    ForgedAssignment(
-      self.codec.imap(f)(g),
-      f(self.elt),
-      self.toFragment.contramap(g)
-    )
 }
 
 private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: Fragment[A])
@@ -37,6 +30,15 @@ private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: 
 }
 
 object AssignmentAction {
+  implicit def imapper[A]: IMapper[AssignmentAction, A] = new IMapper[AssignmentAction, A] {
+    override def imap[B](m: AssignmentAction[A])(f: A => B)(g: B => A): AssignmentAction[B] =
+      ForgedAssignment(
+        m.codec.imap(f)(g),
+        f(m.elt),
+        m.toFragment.contramap(g)
+      )
+  }
+
   private[blaireau] def assignMeta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
     meta: Meta.Aux[A, F, MF, EF],
     elt: A
@@ -45,11 +47,11 @@ object AssignmentAction {
     r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
     ev: FO =:= AssignmentAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): AssignmentAction[A] = meta
-    .extract(elt)
-    .map(assignmentApplier)
-    .reduceLeft(actionAssignmentFolder)
-    .imap(tw.from)(tw.to)
+  ): AssignmentAction[A] =
+    Meta.applyFn[assignmentApplier.type, actionAssignmentFolder.type, A, F, MF, EF, MO, FO, CO, AssignmentAction](
+      meta,
+      elt
+    )
 
   private[blaireau] def empty: AssignmentAction[Void] = ForgedAssignment(Void.codec, Void, Fragment.empty)
 

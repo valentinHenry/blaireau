@@ -9,13 +9,16 @@ import blaireau.dsl.actions.{
   BooleanAction,
   actionBooleanAndFolder,
   actionBooleanOrFolder,
-  booleanEqMapper,
-  booleanNEqMapper
+  booleanEqAndApplier,
+  booleanEqOrApplier,
+  booleanNEqAndApplier,
+  booleanNEqOrApplier
 }
 import blaireau.dsl.actions.BooleanAction._
 import blaireau.metas.{Meta, MetaField}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}
+import skunk.util.Twiddler
 
 import scala.language.implicitConversions
 
@@ -37,34 +40,38 @@ trait MetaFieldBooleanSyntax {
 }
 
 object MetaFieldOps {
-  class MetaEltOps[T, F <: HList, MF <: HList, EF <: HList](mf: Meta.Aux[T, F, MF, EF]) {
-    def ===[MEF <: HList, LRO, O](right: T)(implicit
-      m: Mapper.Aux[booleanEqMapper.type, EF, MEF],
+  class MetaEltOps[T, F <: HList, MF <: HList, EF <: HList](meta: Meta.Aux[T, F, MF, EF]) {
+    def ===[MEF <: HList, LRO, UF](right: T)(implicit
+      m: Mapper.Aux[booleanEqAndApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionBooleanAndFolder.type, LRO],
-      ev: LRO =:= BooleanAction[O]
-    ): BooleanAction[O] =
-      mf.extract(right).map(booleanEqMapper).reduceLeft(actionBooleanAndFolder)
+      ev: LRO =:= BooleanAction[UF],
+      tw: Twiddler.Aux[T, UF]
+    ): BooleanAction[T] =
+      BooleanAction.booleanEqAnd(meta, right)
 
-    def =~=[MEF <: HList, LRO, O](right: T)(implicit
-      m: Mapper.Aux[booleanEqMapper.type, EF, MEF],
+    def =~=[MEF <: HList, LRO, UF](right: T)(implicit
+      m: Mapper.Aux[booleanEqOrApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionBooleanOrFolder.type, LRO],
-      ev: LRO =:= BooleanAction[O]
-    ): BooleanAction[O] =
-      mf.extract(right).map(booleanEqMapper).reduceLeft(actionBooleanOrFolder)
+      ev: LRO =:= BooleanAction[UF],
+      tw: Twiddler.Aux[T, UF]
+    ): BooleanAction[T] =
+      BooleanAction.booleanEqOr(meta, right)
 
-    def =!=[MEF <: HList, LRO, O](right: T)(implicit
-      m: Mapper.Aux[booleanNEqMapper.type, EF, MEF],
-      r: LeftReducer.Aux[MEF, actionBooleanOrFolder.type, LRO],
-      ev: LRO =:= BooleanAction[O]
-    ): BooleanAction[O] =
-      this <> right
+    def =!=[MEF <: HList, LRO, UF](right: T)(implicit
+      m: Mapper.Aux[booleanNEqAndApplier.type, EF, MEF],
+      r: LeftReducer.Aux[MEF, actionBooleanAndFolder.type, LRO],
+      ev: LRO =:= BooleanAction[UF],
+      tw: Twiddler.Aux[T, UF]
+    ): BooleanAction[T] =
+      BooleanAction.booleanNEqAnd(meta, right)
 
-    def <>[MEF <: HList, LRO, O](right: T)(implicit
-      m: Mapper.Aux[booleanNEqMapper.type, EF, MEF],
+    def <>[MEF <: HList, LRO, UF](right: T)(implicit
+      m: Mapper.Aux[booleanNEqOrApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionBooleanOrFolder.type, LRO],
-      ev: LRO =:= BooleanAction[O]
-    ): BooleanAction[O] =
-      mf.extract(right).map(booleanNEqMapper).reduceLeft(actionBooleanOrFolder)
+      ev: LRO =:= BooleanAction[UF],
+      tw: Twiddler.Aux[T, UF]
+    ): BooleanAction[T] =
+      BooleanAction.booleanNEqOr(meta, right)
   }
 
   class MetaFieldOps[T](f: MetaField[T]) {
