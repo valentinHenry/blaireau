@@ -1,6 +1,6 @@
 # Blaireau
 
-**Blaireau** is a codec derivation helper and a simplistic type safe SQL DSL for the [Skunk library](https://github.com/tpolecat/skunk)
+**Blaireau** is a codec derivation helper and a minimalistic type safe SQL DSL for the [Skunk library](https://github.com/tpolecat/skunk)
 
 :warning: **Blaireau** is a personal project in addition to being a work in progress, **hence the lack of documentation, code and functionalities.** 
 ## Table of Content
@@ -302,13 +302,20 @@ Once your `update` function fits your needs, you have three functions which you 
 
 The `toCommand` function returns a **Skunk** `Command[...]`
 ```scala
-case class Three(four: Long)
-case class Test(one: Int, two: String, three: Three)
+def updateUserAddressAndAgeCommand(id: UUID, address: Address, age: Int): Command[Address ~ Int ~ UUID] =
+  users
+    .update(u => (u.address := address) <+> (u.age := age))
+    .where(_.id === id)
+    .toCommand
 ```
 
 The `commandIn` function returns the input parameters of the Command
 ```scala
-???
+val in: String ~ (String ~ String) = users
+  .update(_.address.street := "Teerts Street")
+  .where(e => e.firstName === "Chloe" && e.lastName === "Fontvi")
+  .commandIn
+// eq: ("Teerts Street", ("Chloe", "Fontvi"))
 ```
 
 The `execute` function executed the command with the given `Session`

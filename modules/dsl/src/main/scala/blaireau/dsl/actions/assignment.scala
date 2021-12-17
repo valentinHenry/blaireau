@@ -6,10 +6,13 @@
 package blaireau.dsl.actions
 
 import blaireau.dsl.syntax.MetaFieldAssignmentSyntax
-import blaireau.metas.Meta.ExtractedField
+import blaireau.metas.Meta
+import blaireau.metas.Meta.{ExtractedField, ExtractedMeta}
 import blaireau.utils.FragmentUtils
-import shapeless.{Poly1, Poly2}
+import shapeless.ops.hlist.{LeftReducer, Mapper}
+import shapeless.{HList, Poly1, Poly2}
 import skunk.implicits.toStringOps
+import skunk.util.Twiddler
 import skunk.{Codec, Fragment, Void, ~}
 
 sealed trait AssignmentAction[A] extends Action[A] with Product with Serializable { self =>
@@ -19,6 +22,13 @@ sealed trait AssignmentAction[A] extends Action[A] with Product with Serializabl
       (self.elt, right.elt),
       sql"${self.toFragment}, ${right.toFragment}"
     )
+
+  def imap[B](f: A => B)(g: B => A): AssignmentAction[B] =
+    ForgedAssignment(
+      self.codec.imap(f)(g),
+      f(self.elt),
+      self.toFragment.contramap(g)
+    )
 }
 
 private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: Fragment[A])
@@ -27,6 +37,20 @@ private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: 
 }
 
 object AssignmentAction {
+  private[blaireau] def assignMeta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
+    meta: Meta.Aux[A, F, MF, EF],
+    elt: A
+  )(implicit
+    mapper: Mapper.Aux[assignmentApplier.type, EF, MO],
+    r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
+    ev: FO =:= AssignmentAction[CO],
+    tw: Twiddler.Aux[A, CO]
+  ): AssignmentAction[A] = meta
+    .extract(elt)
+    .map(assignmentApplier)
+    .reduceLeft(actionAssignmentFolder)
+    .imap(tw.from)(tw.to)
+
   private[blaireau] def empty: AssignmentAction[Void] = ForgedAssignment(Void.codec, Void, Fragment.empty)
 
   case class AssignmentOp[A](sqlField: String, codec: Codec[A], elt: A)
@@ -42,8 +66,19 @@ object AssignmentAction {
   }
 }
 
-object assignmentMapper extends Poly1 with MetaFieldAssignmentSyntax {
-  implicit def mapper[A]: Case.Aux[ExtractedField[A], AssignmentAction[A]] = at { case (field, elt) => field := elt }
+object assignmentApplier extends Poly1 with MetaFieldAssignmentSyntax {
+  implicit def fieldAssignment[A]: Case.Aux[ExtractedField[A], AssignmentAction[A]] = at { case (field, elt) =>
+    field := elt
+  }
+
+  implicit def metaAssignment[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
+    mapper: Mapper.Aux[this.type, EF, MO],
+    r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
+    ev: FO =:= AssignmentAction[CO],
+    tw: Twiddler.Aux[A, CO]
+  ): Case.Aux[ExtractedMeta[A, F, MF, EF], AssignmentAction[A]] = at { case (meta, elt) =>
+    AssignmentAction.assignMeta(meta, elt)
+  }
 }
 
 object actionAssignmentFolder extends Poly2 {

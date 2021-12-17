@@ -33,6 +33,7 @@ trait FieldProduct { self =>
 
       private[blaireau] override def codec: Codec[T] = self.codec ~ right.codec
     }
+
 }
 object FieldProduct {
   type Aux[T0, MF0] = FieldProduct {
@@ -102,7 +103,8 @@ object Meta {
     type EF = EF0
   }
 
-  type ExtractedField[T] = (MetaField[T], T)
+  type ExtractedField[T]                                      = (MetaField[T], T)
+  type ExtractedMeta[T, F <: HList, MF <: HList, EF <: HList] = (Meta.Aux[T, F, MF, EF], T)
 
   def of[T](c: Codec[T]): MetaS[T] = Meta[T, HNil, HNil, HNil](c, HNil, HNil)(_ => HNil)
 
@@ -191,16 +193,16 @@ object Meta {
       H,
       FieldType[K, Meta.Aux[H, HF, HMF, HEF]] :: HNil,
       HMF,
-      HEF
+      ExtractedMeta[H, HF, HMF, HEF] :: HNil
     ] = {
       val meta = hMeta.value
 
       Meta0(
-        Meta[H, FieldType[K, Meta.Aux[H, HF, HMF, HEF]] :: HNil, HMF, HEF](
+        Meta[H, FieldType[K, Meta.Aux[H, HF, HMF, HEF]] :: HNil, HMF, ExtractedMeta[H, HF, HMF, HEF] :: HNil](
           meta.codec,
           field[K](meta) :: HNil,
           meta.metaFields
-        )(meta.extract)
+        )(h => (meta -> h) :: HNil)
       )
     }
 
@@ -279,7 +281,7 @@ object Meta {
       nonEmptyLF: Last[LF],
       fPrepend: Prepend.Aux[BF, FieldType[K, Meta.Aux[L, LF, LMF, LEF]] :: HNil, AF],
       mfPrepend: Prepend.Aux[BMF, LMF, AMF],
-      efPrepend: Prepend.Aux[BEF, LEF, AEF]
+      efPrepend: Prepend.Aux[BEF, ExtractedMeta[L, LF, LMF, LEF] :: HNil, AEF]
     ): Meta0.Aux[A, BM ~ L, AF, AMF, AEF] = {
       val meta: Meta.Aux[L, LF, LMF, LEF]                  = lMeta.value
       val metaElt: FieldType[K, Meta.Aux[L, LF, LMF, LEF]] = field[K](meta)
@@ -291,7 +293,7 @@ object Meta {
           _fields = previous.meta.fields ::: (metaElt :: HNil),
           _metaFields = previous.meta.metaFields ::: meta.metaFields
         ) { case (b, l) =>
-          previous.meta.extract(b) ::: meta.extract(l)
+          previous.meta.extract(b) ::: (meta -> l) :: HNil
         }
       )
     }

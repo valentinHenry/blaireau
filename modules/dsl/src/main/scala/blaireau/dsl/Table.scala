@@ -5,11 +5,12 @@
 
 package blaireau.dsl
 
-import blaireau.dsl.actions.{AssignmentAction, BooleanAction, actionAssignmentFolder, assignmentMapper}
+import blaireau.dsl.actions.{AssignmentAction, BooleanAction, actionAssignmentFolder, assignmentApplier}
 import blaireau.metas.{FieldProduct, Meta, MetaField}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper, ToList}
 import skunk.Codec
+import skunk.util.Twiddler
 
 class Table[T, F <: HList, MF <: HList, EF <: HList](name: String, val meta: Meta.Aux[T, F, MF, EF]) {
   type SelectQuery[S <: HList, SC] = SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void]
@@ -40,10 +41,11 @@ class Table[T, F <: HList, MF <: HList, EF <: HList](name: String, val meta: Met
     new UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void](name, meta, updates, BooleanAction.empty)
 
   def update[MEF <: HList, LRO, UF](elt: T)(implicit
-    m: Mapper.Aux[assignmentMapper.type, EF, MEF],
+    m: Mapper.Aux[assignmentApplier.type, EF, MEF],
     r: LeftReducer.Aux[MEF, actionAssignmentFolder.type, LRO],
-    ev: LRO =:= AssignmentAction[UF]
-  ): UpdateCommand[UF] =
+    ev: LRO =:= AssignmentAction[UF],
+    tw: Twiddler.Aux[T, UF]
+  ): UpdateCommand[T] =
     update(meta := elt)
 
   def update[U](u: Meta.Aux[T, F, MF, EF] => AssignmentAction[U]): UpdateCommand[U] =

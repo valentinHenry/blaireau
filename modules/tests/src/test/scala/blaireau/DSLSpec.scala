@@ -34,14 +34,15 @@ object DSLSpec extends App {
       Simple(1, 2L)
     )
 
+  val addr = Address("Grande rue", "33000", "Bordeaux", "France")
   val allPeopleLivingInThisAddress = users.select
-    .where(e => e.address === Address("Grande rue", "33000", "Bordeaux", "France"))
+    .where(e => e.address === addr)
 
   println(allPeopleLivingInThisAddress.toQuery.sql)
   println(allPeopleLivingInThisAddress.queryIn)
 
   val allPeopleNotLivingInThisAddress = users.select
-    .where(e => e.address <> Address("Grande rue", "33000", "Bordeaux", "France"))
+    .where(e => e.address <> addr)
 
   println(allPeopleNotLivingInThisAddress.toQuery.sql)
   print(allPeopleNotLivingInThisAddress.queryIn)
@@ -90,4 +91,16 @@ object DSLSpec extends App {
   val tests                           = Table[Test]("tests")
   val t                               = Test(1, "two", 3L)
   val updateTest: Command[Test ~ Int] = tests.update(t).where(_.one === 1).toCommand
+
+  def updateUserAddressAndAgeCommand(id: UUID, address: Address, age: Int): Command[Address ~ Int ~ UUID] =
+    users.update(u => (u.address := address) <+> (u.age := age)).where(_.id === id).toCommand
+
+  val in: String ~ (String ~ String) = users
+    .update(_.address.street := "Teerts Street")
+    .where(e => e.firstName === "Chloe" && e.lastName === "Fontvi")
+    .commandIn
+
+  println(in)
+
+  println(updateUserAddressAndAgeCommand(UUID.randomUUID(), addr, 15).sql)
 }

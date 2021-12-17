@@ -5,7 +5,7 @@
 
 package blaireau.dsl
 
-import blaireau.dsl.actions.{AssignmentAction, BooleanAction, actionAssignmentFolder, assignmentMapper}
+import blaireau.dsl.actions.{AssignmentAction, BooleanAction, actionAssignmentFolder, assignmentApplier}
 import blaireau.metas.Meta
 import blaireau.utils.FragmentUtils
 import cats.effect.MonadCancelThrow
