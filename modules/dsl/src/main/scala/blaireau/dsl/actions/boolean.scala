@@ -5,7 +5,6 @@
 
 package blaireau.dsl.actions
 
-import blaireau.dsl.actions.booleanEqAndApplier.at
 import blaireau.dsl.syntax.MetaFieldBooleanSyntax
 import blaireau.metas.Meta
 import blaireau.metas.Meta.{ExtractedField, ExtractedMeta}

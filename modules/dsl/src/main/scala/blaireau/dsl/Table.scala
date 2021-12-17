@@ -12,13 +12,13 @@ import shapeless.ops.hlist.{LeftReducer, Mapper, ToList}
 import skunk.Codec
 import skunk.util.Twiddler
 
-class Table[T, F <: HList, MF <: HList, EF <: HList](name: String, val meta: Meta.Aux[T, F, MF, EF]) {
+final class Table[T, F <: HList, MF <: HList, EF <: HList](tableName: String, val meta: Meta.Aux[T, F, MF, EF]) {
   type SelectQuery[S <: HList, SC] = SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void]
   private[this] def select[S <: HList, SC](selects: S, selectCodec: Codec[SC])(implicit
     toList: ToList[S, MetaField[_]]
   ): SelectQuery[S, SC] =
     new SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void](
-      name,
+      tableName,
       meta,
       selects.toList[MetaField[_]].map(_.sqlName),
       selectCodec,
@@ -38,7 +38,7 @@ class Table[T, F <: HList, MF <: HList, EF <: HList](name: String, val meta: Met
 
   type UpdateCommand[U] = UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void]
   private[this] def update[U](updates: AssignmentAction[U]): UpdateCommand[U] =
-    new UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void](name, meta, updates, BooleanAction.empty)
+    new UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void](tableName, meta, updates, BooleanAction.empty)
 
   def update[MEF <: HList, LRO, UF](elt: T)(implicit
     m: Mapper.Aux[assignmentApplier.type, EF, MEF],
@@ -50,6 +50,9 @@ class Table[T, F <: HList, MF <: HList, EF <: HList](name: String, val meta: Met
 
   def update[U](u: Meta.Aux[T, F, MF, EF] => AssignmentAction[U]): UpdateCommand[U] =
     update(u(meta))
+
+  def delete: DeleteCommandBuilder[T, F, MF, EF, skunk.Void] =
+    new DeleteCommandBuilder[T, F, MF, EF, skunk.Void](tableName, meta, BooleanAction.empty)
 }
 
 object Table {

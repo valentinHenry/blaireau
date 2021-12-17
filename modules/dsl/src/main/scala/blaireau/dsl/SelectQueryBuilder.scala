@@ -15,22 +15,18 @@ import shapeless.HList
 import skunk.implicits.toStringOps
 import skunk.{Codec, Cursor, Query, Session}
 
-class SelectQueryBuilder[T, F <: HList, MF <: HList, EF <: HList, SC, W](
+final class SelectQueryBuilder[T, F <: HList, MF <: HList, EF <: HList, SC, W](
   tableName: String,
-  meta: Meta.Aux[T, F, MF, EF],
+  private[blaireau] val meta: Meta.Aux[T, F, MF, EF],
   select: List[String],
   selectCodec: Codec[SC],
-  where: BooleanAction[W]
-) {
+  private[blaireau] val where: BooleanAction[W]
+) extends WhereOps[T, F, MF, EF, W] {
 
-  def where[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, A] =
-    new SelectQueryBuilder[T, F, MF, EF, SC, A](tableName, meta, select, selectCodec, f(meta))
+  override type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, W0] = SelectQueryBuilder[T0, F0, MF0, EF0, SC, W0]
 
-  def whereAnd[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, (W, A)] =
-    new SelectQueryBuilder[T, F, MF, EF, SC, (W, A)](tableName, meta, select, selectCodec, where && f(meta))
-
-  def whereOr[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelectQueryBuilder[T, F, MF, EF, SC, (W, A)] =
-    new SelectQueryBuilder[T, F, MF, EF, SC, (W, A)](tableName, meta, select, selectCodec, where || f(meta))
+  override def withWhere[NW](newWhere: BooleanAction[NW]): SelectQueryBuilder[T, F, MF, EF, SC, NW] =
+    new SelectQueryBuilder[T, F, MF, EF, SC, NW](tableName, meta, select, selectCodec, newWhere)
 
   def toQuery: Query[W, SC] = {
     val fieldsToSelect = select.mkString(",")

@@ -18,6 +18,10 @@
     * [Update](#update)
         + [Update DSL](#update-dsl)
         + [Commands](#commands)
+    * [Delete](#delete)
+        + [Delete DSL](#delete-dsl)
+        + [Commands](#commands-1)
+
 ## Quickstart with sbt
 If you want to test / have fun with it, no artefacts is published at the moment therefore you must publish it locally
 ```shell
@@ -323,3 +327,30 @@ The `execute` function executed the command with the given `Session`
 def updateUser(u: User): F[Completion] =
   users.update(u).where(_.id === u.id).execute(s)
 ```
+
+### Delete
+
+#### Delete DSL
+Delete uses the same [where](#where-dsl) dsl as Select or Update. 
+
+#### Commands
+Once your `delete` function fits your needs, you have three functions which you can use.
+
+The `toCommand` function returns a **Skunk** `Command[...]`
+```scala
+def deleteSpecificUser(id: UUID): Command[UUID] =
+  users.delete.where(_.id === id).toCommand
+```
+
+The `commandIn` function returns the input parameters of the Command
+```scala
+val in: String = users.delete.where(_.firstName === "Valentin").commandId
+// eq: "Valentin"
+```
+
+The `execute` function executed the command with the given `Session`
+```scala
+def deleteUser(u: UUID): F[Completion] =
+  users.delete.where(_.id === u.id).execute(s)
+```
+

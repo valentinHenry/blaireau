@@ -14,21 +14,17 @@ import skunk.data.Completion
 import skunk.implicits.toStringOps
 import skunk.{Command, Session, ~}
 
-class UpdateCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, U, W](
+final class UpdateCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, U, W](
   tableName: String,
-  meta: Meta.Aux[T, F, MF, EF],
+  private[blaireau] val meta: Meta.Aux[T, F, MF, EF],
   updatedFields: AssignmentAction[U],
-  where: BooleanAction[W]
-) {
+  private[blaireau] val where: BooleanAction[W]
+) extends WhereOps[T, F, MF, EF, W] {
 
-  def where[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): UpdateCommandBuilder[T, F, MF, EF, U, A] =
-    new UpdateCommandBuilder(tableName, meta, updatedFields, f(meta))
+  override type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, W0] = UpdateCommandBuilder[T0, F0, MF0, EF0, U, W0]
 
-  def whereAnd[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): UpdateCommandBuilder[T, F, MF, EF, U, (W, A)] =
-    new UpdateCommandBuilder(tableName, meta, updatedFields, where && f(meta))
-
-  def whereOr[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): UpdateCommandBuilder[T, F, MF, EF, U, (W, A)] =
-    new UpdateCommandBuilder(tableName, meta, updatedFields, where || f(meta))
+  override def withWhere[NW](newWhere: BooleanAction[NW]): UpdateCommandBuilder[T, F, MF, EF, U, NW] =
+    new UpdateCommandBuilder[T, F, MF, EF, U, NW](tableName, meta, updatedFields, newWhere)
 
   def toCommand: Command[U ~ W] = {
     val updateFragment     = FragmentUtils.const(s"UPDATE TABLE $tableName")

@@ -103,4 +103,8 @@ object DSLSpec extends App {
   println(in)
 
   println(updateUserAddressAndAgeCommand(UUID.randomUUID(), addr, 15).sql)
+
+  val deleteAllUsersWhoAreNamedMonique = users.delete.where(_.firstName === "Monique")
+  println(deleteAllUsersWhoAreNamedMonique.toCommand.sql)
+  println(deleteAllUsersWhoAreNamedMonique.commandIn)
 }
