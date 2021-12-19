@@ -1,5 +1,5 @@
 # Blaireau
-[![Build](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml/badge.svg)](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml)
+[![CI](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml/badge.svg)](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/valentinHenry/blaireau/branch/master/graph/badge.svg?token=LFQYEC7QD4)](https://codecov.io/gh/valentinHenry/blaireau)
 
 
@@ -25,7 +25,7 @@
         + [Delete DSL](#delete-dsl)
         + [Commands](#commands-1)
     * [Insert](#insert)
-        + [Insert DSl](#insert-dsl)
+        + [Insert DSL](#insert-dsl)
         + [Commands](#commands-2)
 
 
@@ -156,7 +156,7 @@ val namesAndAddress: Query[Void, String ~ Address] = users.select(e => e.firstNa
 // Instead of Query[Void, String ~ String ~ String ~ String ~ String]
 ```
 
-Embedded fields selection is also allowed:
+Embedded fields selection is also available:
 ```scala
 val cities: Query[Void, String] = users.select(_.address.city)
 ```
@@ -362,7 +362,7 @@ def deleteUser(u: UUID): F[Completion] =
 ```
 
 ### Insert
-#### Insert DSl
+#### Insert DSL
 
 There are options regarding the insertion of fields:
 - Whole object insertion

@@ -131,7 +131,7 @@ object BooleanAction {
     with BooleanAction[A]
 
   final case class BooleanLtEq[A](sqlField: String, codec: Codec[A], elt: A)
-    extends Action.Op[A]("<", sqlField)
+    extends Action.Op[A]("<=", sqlField)
     with BooleanAction[A]
 }
 
