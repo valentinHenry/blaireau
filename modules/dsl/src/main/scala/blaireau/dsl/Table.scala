@@ -6,6 +6,7 @@
 package blaireau.dsl
 
 import blaireau.dsl.actions.{AssignmentAction, BooleanAction, actionAssignmentFolder, assignmentApplier}
+import blaireau.dsl.builders.{DeleteCommandBuilder, InsertCommandBuilder, SelectQueryBuilder, UpdateCommandBuilder}
 import blaireau.metas.{FieldProduct, Meta, MetaField}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper, ToList}
@@ -14,9 +15,9 @@ import skunk.util.Twiddler
 
 final class Table[T, F <: HList, MF <: HList, EF <: HList](tableName: String, val meta: Meta.Aux[T, F, MF, EF]) {
   type SelectQuery[S <: HList, SC] = SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void]
-  private[this] def select[S <: HList, SC](selects: S, selectCodec: Codec[SC])(implicit
-    toList: ToList[S, MetaField[_]]
-  ): SelectQuery[S, SC] =
+  private[this] def select[SMF <: HList, SC](selects: SMF, selectCodec: Codec[SC])(implicit
+    toList: ToList[SMF, MetaField[_]]
+  ): SelectQuery[SMF, SC] =
     new SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void](
       tableName,
       meta,
@@ -29,9 +30,9 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](tableName: String, va
     toList: ToList[MF, MetaField[_]]
   ): SelectQuery[MF, T] = select(meta.metaFields, meta.codec)
 
-  def select[MFO <: HList, OC](s: Meta.Aux[T, F, MF, EF] => FieldProduct.Aux[OC, MFO])(implicit
-    toList: ToList[MFO, MetaField[_]]
-  ): SelectQuery[MFO, OC] = {
+  def select[SMF <: HList, SC](s: Meta.Aux[T, F, MF, EF] => FieldProduct.Aux[SC, SMF])(implicit
+    toList: ToList[SMF, MetaField[_]]
+  ): SelectQuery[SMF, SC] = {
     val selected = s(meta)
     select(selected.metaFields, selected.codec)
   }
@@ -53,6 +54,26 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](tableName: String, va
 
   def delete: DeleteCommandBuilder[T, F, MF, EF, skunk.Void] =
     new DeleteCommandBuilder[T, F, MF, EF, skunk.Void](tableName, meta, BooleanAction.empty)
+
+  type InsertCommand[I] = InsertCommandBuilder[I, InsertCommandBuilder.Ev.Empty]
+  private[this] def insert[IMF <: HList, IC](insert: IMF, insertCodec: Codec[IC])(implicit
+    toList: ToList[IMF, MetaField[_]]
+  ): InsertCommand[IC] =
+    InsertCommandBuilder.make(
+      tableName,
+      insert.toList[MetaField[_]].map(_.sqlName),
+      insertCodec.asEncoder
+    )
+
+  def insert(implicit toList: ToList[MF, MetaField[_]]): InsertCommand[T] =
+    insert[MF, T](meta.metaFields, meta.codec)
+
+  def insert[IMF <: HList, IC](u: Meta.Aux[T, F, MF, EF] => FieldProduct.Aux[IC, IMF])(implicit
+    toList: ToList[IMF, MetaField[_]]
+  ): InsertCommand[IC] = {
+    val inserted = u(meta)
+    insert(inserted.metaFields, inserted.codec)
+  }
 }
 
 object Table {

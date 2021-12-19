@@ -1,6 +1,7 @@
 package blaireau
 
 import blaireau.dsl._
+import skunk.implicits.toIdOps
 import skunk.{Command, Query, ~}
 
 import java.time.OffsetDateTime
@@ -107,4 +108,16 @@ object DSLSpec extends App {
   val deleteAllUsersWhoAreNamedMonique = users.delete.where(_.firstName === "Monique")
   println(deleteAllUsersWhoAreNamedMonique.toCommand.sql)
   println(deleteAllUsersWhoAreNamedMonique.commandIn)
+
+  val insertUser = users.insert.value(u)
+  println(insertUser.toCommand.sql)
+  println(insertUser.commandIn)
+
+  val insertUsers = users.insert.values(List(u, u.copy(id = UUID.randomUUID())))
+  println(insertUsers.toCommand.sql)
+  println(insertUsers.commandIn)
+
+  val insertIdAndAddress = users.insert(u => u.id ~ u.address).value(u.id ~ u.address)
+  println(insertIdAndAddress.toCommand.sql)
+  println(insertIdAndAddress.commandIn)
 }

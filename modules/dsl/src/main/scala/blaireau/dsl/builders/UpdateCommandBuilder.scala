@@ -3,9 +3,9 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl
+package blaireau.dsl.builders
 
-import blaireau.dsl.actions.{AssignmentAction, BooleanAction, actionAssignmentFolder, assignmentApplier}
+import blaireau.dsl.actions.{AssignmentAction, BooleanAction}
 import blaireau.metas.Meta
 import blaireau.utils.FragmentUtils
 import cats.effect.MonadCancelThrow

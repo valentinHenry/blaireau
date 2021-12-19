@@ -3,7 +3,7 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl
+package blaireau.dsl.builders
 
 import blaireau.dsl.actions.BooleanAction
 import blaireau.metas.Meta
@@ -13,6 +13,7 @@ import cats.effect.kernel.Resource
 import cats.syntax.applicative._
 import shapeless.HList
 import skunk.implicits.toStringOps
+import skunk.util.Origin
 import skunk.{Codec, Cursor, Query, Session}
 
 final class SelectQueryBuilder[T, F <: HList, MF <: HList, EF <: HList, SC, W](
@@ -40,15 +41,15 @@ final class SelectQueryBuilder[T, F <: HList, MF <: HList, EF <: HList, SC, W](
 
   def queryIn: W = where.elt
 
-  def option[M[_]: MonadCancelThrow](s: Session[M]): M[Option[SC]] =
+  def option[M[_]: MonadCancelThrow](s: Session[M])(implicit origin: Origin): M[Option[SC]] =
     s.prepare(toQuery).use(_.option(queryIn))
 
-  def unique[M[_]: MonadCancelThrow](s: Session[M]): M[SC] =
+  def unique[M[_]: MonadCancelThrow](s: Session[M])(implicit origin: Origin): M[SC] =
     s.prepare(toQuery).use(_.unique(queryIn))
 
-  def cursor[M[_]](s: Session[M]): Resource[M, Cursor[M, SC]] =
+  def cursor[M[_]](s: Session[M])(implicit origin: Origin): Resource[M, Cursor[M, SC]] =
     s.prepare(toQuery).flatMap(_.cursor(queryIn))
 
-  def stream[M[_]: MonadCancelThrow](chunkSize: Int, s: Session[M]): M[fs2.Stream[M, SC]] =
+  def stream[M[_]: MonadCancelThrow](chunkSize: Int, s: Session[M])(implicit origin: Origin): M[fs2.Stream[M, SC]] =
     s.prepare(toQuery).use(_.stream(queryIn, chunkSize).pure[M])
 }

@@ -21,6 +21,10 @@
     * [Delete](#delete)
         + [Delete DSL](#delete-dsl)
         + [Commands](#commands-1)
+    * [Insert](#insert)
+        + [Insert DSl](#insert-dsl)
+        + [Commands](#commands-2)
+
 
 ## Quickstart with sbt
 If you want to test / have fun with it, no artefacts is published at the moment therefore you must publish it locally
@@ -32,7 +36,7 @@ $> sbt publishLocal
 
 In your `build.sbt` add the following line:
 ```scala
-// For automatic and semi-automatic skunk-codec derivation
+// For skunk-codec derivation
 libraryDependencies += "fr.valentinhenry" %% "blaireau-derivation-codec" % Version
 // For the SQL DSL:
 libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
@@ -194,23 +198,23 @@ val findById = users.select.where(_.id === id)...
 
 val rueDuChateauAddress = Address("15 Rue du Château", "33000", "Bordeaux", "France")
 val findUsersLivingAtTheAddress = users.select.where(_.address === rueDuChateauAddress)
-// SELECT * FROM users WHERE street = $1 && postalCode = $2 && city = $3 && country = $4
+// SELECT * FROM users WHERE street = $1 AND postalCode = $2 AND city = $3 AND country = $4
 // $1 = "15 Rue du Château"
 // $2 = "33000"
 // $3 = "Bordeaux"
 // $4 = "France"
 
 val findAllOtherUsers = users.select.where(_.address <> rueDuChateauAddress)
-// SELECT * FROM users WHERE street <> $1 || postalCode <> $2 || city <> $3 || country = $4
+// SELECT * FROM users WHERE street <> $1 OR postalCode <> $2 OR city <> $3 OR country <> $4
 // $1 = ...
 
 val finaAllUsersNotLivingAnywhereRessemblingTheAddress = users.select.where(_.address =!= rueDuChateauAddress)
-// SELECT * FROM users WHERE street <> $1 && postalCode <> $2 && city <> $3 && country = $4
+// SELECT * FROM users WHERE street <> $1 AND postalCode <> $2 AND city <> $3 AND country <> $4
 // $1 = ...
 
 
-val allLuciesOver30LivingInParis = users.select.where(e => e.address.city === "Paris" && e.age >= 30)
-// SELECT * FROM users WHERE city = $1 && age >= $2
+val allUsersOver30LivingInParis = users.select.where(e => e.address.city === "Paris" && e.age >= 30)
+// SELECT * FROM users WHERE city = $1 AND age >= $2
 // $1 = "Paris"
 // $2 = 30
 ```
@@ -222,7 +226,7 @@ Once the select query fits your needs, you can chose the function which fits you
 The `toQuery` function compiles the query into a **Skunk** `Query`.
 ```scala
 import java.util.UUID
-val findById: Query[UUID, User] = users.select.where(_.id === UUID.randomUUID())
+val findById: Query[UUID, User] = users.select.where(_.id === UUID.randomUUID()).toQuery
 ```
 
 The `queryIn` returns the input parameter given to the query builder
@@ -302,7 +306,7 @@ As you can see above, when the full class is updates, you can omit the `:=` oper
 If you want to know more about the `where` function, it has the same dsl as the [Select's where](#where-dsl).
 
 #### Commands
-Once your `update` function fits your needs, you have three functions which you can use.
+Once your `update` command fits your needs, you have three functions which you can use.
 
 The `toCommand` function returns a **Skunk** `Command[...]`
 ```scala
@@ -322,7 +326,7 @@ val in: String ~ (String ~ String) = users
 // eq: ("Teerts Street", ("Chloe", "Fontvi"))
 ```
 
-The `execute` function executed the command with the given `Session`
+The `execute` function prepares and executes the command with the given `Session`
 ```scala
 def updateUser(u: User): F[Completion] =
   users.update(u).where(_.id === u.id).execute(s)
@@ -334,7 +338,7 @@ def updateUser(u: User): F[Completion] =
 Delete uses the same [where](#where-dsl) dsl as Select or Update. 
 
 #### Commands
-Once your `delete` function fits your needs, you have three functions which you can use.
+Once your `delete` command fits your needs, you have three functions which you can use.
 
 The `toCommand` function returns a **Skunk** `Command[...]`
 ```scala
@@ -344,13 +348,66 @@ def deleteSpecificUser(id: UUID): Command[UUID] =
 
 The `commandIn` function returns the input parameters of the Command
 ```scala
-val in: String = users.delete.where(_.firstName === "Valentin").commandId
+val in: String = users.delete.where(_.firstName === "Valentin").commandIn
 // eq: "Valentin"
 ```
 
-The `execute` function executed the command with the given `Session`
+The `execute` function prepares and executes the command with the given `Session`
 ```scala
 def deleteUser(u: UUID): F[Completion] =
   users.delete.where(_.id === u.id).execute(s)
 ```
 
+### Insert
+#### Insert DSl
+
+There are options regarding the insertion of fields:
+- Whole object insertion
+- Specific fields insertion
+
+For the whole object insertion, the `insert` function should not have parameters
+```scala
+val insertUser: Command[User] = users.insert...
+```
+For a more specific insertion, it can be done using the `~` operator like in the **Skunk** library.
+```scala
+import skunk.~
+val createUserWithTheAddress: Command[UUID ~ Address] = users.insert(e => e.id ~ e.address)...
+// INSERT INTO users(id, street, postalCode, city, country) VALUES ($1, $2, $3, $4, $5)...
+```
+
+You can insert either a single value or a list of values:
+```scala
+val dummyUser: User = ???
+val insertUser = users.insert.value(dummyUser)
+
+val dummyUserList: List[User] = ???
+val insertAllUsers = users.insert.values(dummyUserList)
+```
+
+:warning: The `values` insertion keeps in memory the size of the list given. The command created by this cannot be used
+with a list of a different size.
+
+#### Commands 
+
+Once your `insert` command fits your needs, you have three functions which you can use.
+
+The `toCommand` function returns a **Skunk** `Command[...]`
+```scala
+def insertUser(user: User): Command[User] =
+  users.insert.value(user).toCommand
+```
+
+The `commandIn` function returns the input parameters of the Command
+```scala
+val dummyId = UUID("db373385-29cd-4380-9cf5-5501c94b91a1")
+val dummyAddress = Address("Str", "Pc", "City", "Ctr")
+val in: UUID ~ Address = users.insert(u => u.id ~ u.address).value(dummyId ~ dummyAddress).commandIn
+// eq: (UUID("db373385-29cd-4380-9cf5-5501c94b91a1"), Address("Str", "Pc", "City", "Ctr"))
+```
+
+The `execute` function prepares and executes the command with the given `Session`
+```scala
+def insertUser(users: List[User]): F[Completion] =
+  users.insert.values(users).execute(s)
+```

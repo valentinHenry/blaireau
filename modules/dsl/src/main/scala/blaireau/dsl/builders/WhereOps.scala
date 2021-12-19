@@ -1,4 +1,4 @@
-package blaireau.dsl
+package blaireau.dsl.builders
 
 import blaireau.dsl.actions.BooleanAction
 import blaireau.metas.Meta

@@ -1,4 +1,4 @@
-package blaireau.dsl
+package blaireau.dsl.builders
 
 import blaireau.dsl.actions.BooleanAction
 import blaireau.metas.Meta
@@ -7,7 +7,8 @@ import cats.effect.MonadCancelThrow
 import shapeless.HList
 import skunk.data.Completion
 import skunk.implicits.toStringOps
-import skunk.{Command, Session, ~}
+import skunk.util.Origin
+import skunk.{Command, Session}
 
 final class DeleteCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, W](
   tableName: String,
@@ -27,6 +28,6 @@ final class DeleteCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, W](
 
   def commandIn: W = where.elt
 
-  def execute[M[_]: MonadCancelThrow](s: Session[M]): M[Completion] =
+  def execute[M[_]: MonadCancelThrow](s: Session[M])(implicit origin: Origin): M[Completion] =
     s.prepare(toCommand).use(_.execute(commandIn))
 }
