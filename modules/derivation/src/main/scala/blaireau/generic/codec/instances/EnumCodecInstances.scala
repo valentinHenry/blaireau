@@ -8,5 +8,5 @@ package blaireau.generic.codec.instances
 import skunk.codec.EnumCodec
 
 trait EnumCodecInstances extends EnumCodec {
-  //TODO
+  // TODO
 }

@@ -8,5 +8,5 @@ package blaireau.metas.instances
 import skunk.codec.EnumCodec
 
 trait EnumMetaInstances extends EnumCodec {
-  //TODO
+  // TODO
 }

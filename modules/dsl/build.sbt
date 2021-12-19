@@ -1,2 +1,2 @@
-name := "blaireau-dsl"
+name        := "blaireau-dsl"
 description := "A postgresql DSL for Skunk."

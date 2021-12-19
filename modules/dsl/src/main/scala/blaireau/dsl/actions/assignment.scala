@@ -25,7 +25,7 @@ sealed trait AssignmentAction[A] extends Action[A] with Product with Serializabl
 }
 
 private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: Fragment[A])
-    extends AssignmentAction[A] {
+  extends AssignmentAction[A] {
   override def toFragment: Fragment[A] = fragment
 }
 
@@ -56,8 +56,8 @@ object AssignmentAction {
   private[blaireau] def empty: AssignmentAction[Void] = ForgedAssignment(Void.codec, Void, Fragment.empty)
 
   case class AssignmentOp[A](sqlField: String, codec: Codec[A], elt: A)
-      extends Action.Op[A]("=", sqlField)
-      with AssignmentAction[A]
+    extends Action.Op[A]("=", sqlField)
+    with AssignmentAction[A]
 
   case class AssignmentIncr[A](sqlField: String, codec: Codec[A], elt: A) extends AssignmentAction[A] {
     override def toFragment: Fragment[A] = FragmentUtils.withValue(s"$sqlField = $sqlField + ", codec)

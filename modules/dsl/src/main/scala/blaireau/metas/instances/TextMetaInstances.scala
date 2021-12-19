@@ -11,6 +11,6 @@ import skunk.codec.TextCodecs
 object text extends TextCodecInstances
 
 trait TextCodecInstances extends TextCodecs {
-  //TODO find a solution for bpchar and varchar...
+  // TODO find a solution for bpchar and varchar...
   implicit val stringMeta: MetaS[String] = Meta.of(text)
 }

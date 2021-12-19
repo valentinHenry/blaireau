@@ -5,23 +5,20 @@
 
 package blaireau.metas.instances
 
-import blaireau.metas.Meta
-import shapeless.HList
-
 object all extends AllMetaInstances
 
 trait AllMetaInstances
-    extends CodecDerivation
-    with NumericCodecInstances
-    with BinaryMetaInstances
-    with UuidMetaInstances
-    with EnumMetaInstances
-    with TextCodecInstances
-    with BooleanMetaInstances
-    with TemporalMetaInstances
+  extends CodecDerivation
+  with NumericCodecInstances
+  with BinaryMetaInstances
+  with UuidMetaInstances
+  with EnumMetaInstances
+  with TextCodecInstances
+  with BooleanMetaInstances
+  with TemporalMetaInstances
 
 trait CodecDerivation {
-  //FIXME EF is not right
+  // FIXME EF is not right
 //  implicit final def deriveOptionalMetaType[T, F <: HList, MF <: HList, EF <: HList](implicit
 //    m: Meta.Aux[T, F, MF, EF]
 //  ): Meta.Aux[Option[T], F, MF, Option[EF]] =

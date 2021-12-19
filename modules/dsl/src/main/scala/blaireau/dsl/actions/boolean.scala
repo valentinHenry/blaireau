@@ -107,32 +107,32 @@ object BooleanAction {
     )
 
   final case class BooleanEq[A](sqlField: String, codec: Codec[A], elt: A)
-      extends Action.Op[A]("=", sqlField)
-      with BooleanAction[A]
+    extends Action.Op[A]("=", sqlField)
+    with BooleanAction[A]
 
   final case class BooleanLike[A](sqlField: String, codec: Codec[A], elt: A)
-      extends Action.Op[A]("like", sqlField)
-      with BooleanAction[A]
+    extends Action.Op[A]("like", sqlField)
+    with BooleanAction[A]
 
   final case class BooleanNEq[A](sqlField: String, codec: Codec[A], elt: A)
-      extends Action.Op[A]("<>", sqlField)
-      with BooleanAction[A]
+    extends Action.Op[A]("<>", sqlField)
+    with BooleanAction[A]
 
   final case class BooleanGt[A](sqlField: String, codec: Codec[A], elt: A)
-      extends Action.Op[A](">", sqlField)
-      with BooleanAction[A]
+    extends Action.Op[A](">", sqlField)
+    with BooleanAction[A]
 
   final case class BooleanGtEq[A](sqlField: String, codec: Codec[A], elt: A)
-      extends Action.Op[A](">=", sqlField)
-      with BooleanAction[A]
+    extends Action.Op[A](">=", sqlField)
+    with BooleanAction[A]
 
   final case class BooleanLt[A](sqlField: String, codec: Codec[A], elt: A)
-      extends Action.Op[A]("<", sqlField)
-      with BooleanAction[A]
+    extends Action.Op[A]("<", sqlField)
+    with BooleanAction[A]
 
   final case class BooleanLtEq[A](sqlField: String, codec: Codec[A], elt: A)
-      extends Action.Op[A]("<", sqlField)
-      with BooleanAction[A]
+    extends Action.Op[A]("<", sqlField)
+    with BooleanAction[A]
 }
 
 class BooleanEqApplier extends Poly1 with MetaFieldBooleanSyntax {

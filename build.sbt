@@ -1,7 +1,7 @@
 // Global Settings
 lazy val commonSettings = Seq(
   // Compilation
-  version := "0.0.1",
+  version      := "0.0.1",
   scalaVersion := "2.13.7",
   scalacOptions ++= Seq("-Ymacro-annotations"),
   organization := "fr.valentinhenry",

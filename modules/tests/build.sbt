@@ -1,2 +1,2 @@
-name := "blaireau-tests"
+name        := "blaireau-tests"
 description := "Test suite of Blaireau."
