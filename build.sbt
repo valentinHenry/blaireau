@@ -18,7 +18,7 @@ lazy val commonSettings = Seq(
   headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentStyle.cppStyleLineComment),
   headerLicense := Some(
     HeaderLicense.Custom(
-      """|Written by Valentin HENRY
+      """|Written by Valentin "Firiath" Henry
          |
          |This software is licensed under the MIT License (MIT).
          |For more information see LICENSE or https://opensource.org/licenses/MIT
@@ -35,6 +35,7 @@ lazy val blaireau = project
   .dependsOn(`codec-derivation`, dsl, tests)
   .aggregate(`codec-derivation`, dsl, tests)
   .enablePlugins(ScalafmtPlugin)
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val `codec-derivation` = project
   .in(file("modules/derivation"))
