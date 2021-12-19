@@ -5,10 +5,12 @@
 
 package blaireau.generic.codec
 
+import _root_.shapeless.{::, Generic, HList, HNil, Lazy}
+import shapeless.ops.hlist.{Init, Last, Prepend}
 import skunk.util.Twiddler
 import skunk.{Codec, ~}
-import _root_.shapeless.{::, Generic, HList, HNil, Lazy}
-import _root_.shapeless.ops.hlist.{Init, Last, Prepend}
+
+import scala.annotation.nowarn
 
 object auto extends ShapelessDerivation
 
@@ -39,6 +41,7 @@ object Codec0 {
   ): Codec0.Aux[H :: HNil, H] =
     Codec0(hCodec.value)
 
+  @nowarn
   implicit def hlistCodec0[
     A <: HList,
     LO,

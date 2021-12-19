@@ -5,17 +5,16 @@
 
 package blaireau.metas
 
-import blaireau.dsl.actions.{Action, IMapper}
+import blaireau.dsl.actions.IMapper
 import shapeless.labelled.{FieldType, field}
 import shapeless.ops.hlist.{Init, Last, LeftReducer, Mapper, Prepend}
 import shapeless.ops.record.Selector
 import shapeless.tag.@@
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
-import skunk.{Codec, ~}
 import skunk.util.Twiddler
+import skunk.{Codec, ~}
 
-import scala.language.experimental.macros
-import scala.language.{dynamics, implicitConversions}
+import scala.annotation.nowarn
 
 trait FieldProduct { self =>
   type MF <: HList
@@ -147,6 +146,7 @@ object Meta {
     private[blaireau] override final def extract(t: T): EF0 = _extract(t)
   }
 
+  @nowarn
   implicit final def genericMetaEncoder[A, T, CT, F <: HList, MF <: HList, EF <: HList](implicit
     generic: LabelledGeneric.Aux[A, T],
     meta0: Lazy[Meta0.Aux[T, CT, F, MF, EF]],
@@ -205,6 +205,7 @@ object Meta {
       )
     }
 
+    @nowarn
     implicit def base0Compound[K <: Symbol, H, HF <: HList, HMF <: HList, HEF <: HList](implicit
       w: Witness.Aux[K],
       hMeta: Lazy[Meta.Aux[H, HF, HMF, HEF]],
@@ -227,6 +228,7 @@ object Meta {
       )
     }
 
+    @nowarn
     implicit def hlistMeta0[
       A <: HList,   // The object Generic Representation
       AF <: HList,  // Fields of the object
@@ -275,6 +277,7 @@ object Meta {
       )
     }
 
+    @nowarn
     implicit def hlistMeta0Compound[
       A <: HList,   // The object Generic Representation
       AF <: HList,  // Fields of the object

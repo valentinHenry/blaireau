@@ -6,7 +6,6 @@
 package blaireau.metas.instances
 
 import blaireau.metas.{Meta, MetaS}
-import skunk.Codec
 import skunk.codec.UuidCodec
 
 import java.util.UUID

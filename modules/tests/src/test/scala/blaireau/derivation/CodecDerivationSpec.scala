@@ -8,6 +8,8 @@ package blaireau.derivation
 import munit.FunSuite
 import skunk.Codec
 
+import scala.annotation.unused
+
 class CodecDerivationSpec extends FunSuite {
   test("Can derive simple coded") {
     import blaireau.generic._
@@ -45,6 +47,8 @@ class CodecDerivationSpec extends FunSuite {
     import blaireau.generic._
 
     case class Simple(test: String)
+
+    @unused
     implicit val simpleCodec: Codec[Simple] = varchar(16).gimap
 
     case class NotSimple(ok: String, simple: Option[Simple])

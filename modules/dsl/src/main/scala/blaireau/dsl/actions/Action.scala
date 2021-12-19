@@ -6,8 +6,7 @@
 package blaireau.dsl.actions
 
 import blaireau.utils.FragmentUtils
-import cats.Id
-import skunk.{Codec, Fragment, Void}
+import skunk.{Codec, Fragment}
 
 trait Action[A] { self =>
   def codec: Codec[A]

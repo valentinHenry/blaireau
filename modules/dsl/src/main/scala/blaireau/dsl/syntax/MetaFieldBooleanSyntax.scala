@@ -20,7 +20,7 @@ import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}
 import skunk.util.Twiddler
 
-import scala.language.implicitConversions
+import scala.annotation.unused
 
 trait MetaFieldBooleanSyntax {
   import MetaFieldOps._
@@ -32,7 +32,7 @@ trait MetaFieldBooleanSyntax {
   implicit final def metaFieldOpsSyntax[T](f: MetaField[T]): MetaFieldOps[T] =
     new MetaFieldOps[T](f)
 
-  implicit final def numericFieldSyntax[T: Numeric](f: MetaField[T]): NumericFieldOps[T] =
+  implicit final def numericFieldSyntax[T](f: MetaField[T])(implicit @unused ev: Numeric[T]): NumericFieldOps[T] =
     new NumericFieldOps[T](f)
 
   implicit final def stringFieldSyntax(f: MetaField[String]): StringFieldOps[String] =
