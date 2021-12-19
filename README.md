@@ -1,5 +1,5 @@
 # Blaireau
-[![Scala CI](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml/badge.svg)](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml)
+[![Build](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml/badge.svg)](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/valentinHenry/blaireau/branch/master/graph/badge.svg?token=LFQYEC7QD4)](https://codecov.io/gh/valentinHenry/blaireau)
 
 
