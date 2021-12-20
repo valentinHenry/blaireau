@@ -5,15 +5,7 @@
 
 package blaireau.dsl.syntax
 
-import blaireau.dsl.actions.{
-  BooleanAction,
-  actionBooleanAndFolder,
-  actionBooleanOrFolder,
-  booleanEqAndApplier,
-  booleanEqOrApplier,
-  booleanNEqAndApplier,
-  booleanNEqOrApplier
-}
+import blaireau.dsl.actions._
 import blaireau.dsl.actions.BooleanAction._
 import blaireau.metas.{Meta, MetaField}
 import shapeless.HList
@@ -29,7 +21,10 @@ trait MetaFieldBooleanSyntax {
   ): MetaEltOps[T, F, MF, EF] =
     new MetaEltOps[T, F, MF, EF](m)
 
-  implicit final def metaFieldOpsSyntax[T](f: MetaField[T]): MetaFieldOps[T] =
+  implicit final def optionMetaFieldSyntax[T](f: MetaField[Option[T]]): OptionMetaFieldOp[T] =
+    new OptionMetaFieldOp[T](f)
+
+  implicit final def metaFieldSyntax[T](f: MetaField[T]): MetaFieldOps[T] =
     new MetaFieldOps[T](f)
 
   implicit final def numericFieldSyntax[T](f: MetaField[T])(implicit @unused ev: Numeric[T]): NumericFieldOps[T] =
@@ -44,33 +39,33 @@ object MetaFieldOps {
     def ===[MEF <: HList, LRO, UF](right: T)(implicit
       m: Mapper.Aux[booleanEqAndApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionBooleanAndFolder.type, LRO],
-      ev: LRO =:= BooleanAction[UF],
+      ev: LRO =:= IdBooleanAction[UF],
       tw: Twiddler.Aux[T, UF]
-    ): BooleanAction[T] =
+    ): IdBooleanAction[T] =
       BooleanAction.booleanEqAnd(meta, right)
 
     def =~=[MEF <: HList, LRO, UF](right: T)(implicit
       m: Mapper.Aux[booleanEqOrApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionBooleanOrFolder.type, LRO],
-      ev: LRO =:= BooleanAction[UF],
+      ev: LRO =:= IdBooleanAction[UF],
       tw: Twiddler.Aux[T, UF]
-    ): BooleanAction[T] =
+    ): IdBooleanAction[T] =
       BooleanAction.booleanEqOr(meta, right)
 
     def =!=[MEF <: HList, LRO, UF](right: T)(implicit
       m: Mapper.Aux[booleanNEqAndApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionBooleanAndFolder.type, LRO],
-      ev: LRO =:= BooleanAction[UF],
+      ev: LRO =:= IdBooleanAction[UF],
       tw: Twiddler.Aux[T, UF]
-    ): BooleanAction[T] =
+    ): IdBooleanAction[T] =
       BooleanAction.booleanNEqAnd(meta, right)
 
     def <>[MEF <: HList, LRO, UF](right: T)(implicit
       m: Mapper.Aux[booleanNEqOrApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionBooleanOrFolder.type, LRO],
-      ev: LRO =:= BooleanAction[UF],
+      ev: LRO =:= IdBooleanAction[UF],
       tw: Twiddler.Aux[T, UF]
-    ): BooleanAction[T] =
+    ): IdBooleanAction[T] =
       BooleanAction.booleanNEqOr(meta, right)
   }
 
@@ -117,5 +112,14 @@ object MetaFieldOps {
 
     def like(right: T): BooleanLike[T] =
       BooleanLike(f.sqlName, f.codec, right)
+  }
+
+  class OptionMetaFieldOp[T](mf: MetaField[Option[T]]) extends MetaFieldBooleanSyntax {
+    def contains(t: T): BooleanAction[Option[T], T] = BooleanOptionContains(mf.sqlName, mf.codec, t)
+    def isEmpty: BooleanOptionIsEmpty               = BooleanOptionIsEmpty(mf.sqlName)
+    def isDefined: BooleanOptionIsDefined           = BooleanOptionIsDefined(mf.sqlName)
+    // TODO
+    // def exists[CO, O](f: MetaField[T] => BooleanAction[CO, O]): BooleanAction[CO, O] = ???
+    // def forall[CO, O](f: MetaField[T] => BooleanAction[CO, O]): BooleanAction[CO, O] = ???
   }
 }

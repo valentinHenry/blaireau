@@ -8,21 +8,22 @@ package blaireau.dsl.builders
 import blaireau.dsl.actions.BooleanAction
 import blaireau.metas.Meta
 import shapeless.HList
+import skunk.~
 
-trait WhereOps[T, F <: HList, MF <: HList, EF <: HList, W] {
-  private[blaireau] def where: BooleanAction[W]
+trait WhereOps[T, F <: HList, MF <: HList, EF <: HList, WC, W] {
+  private[blaireau] def where: BooleanAction[WC, W]
   private[blaireau] def meta: Meta.Aux[T, F, MF, EF]
 
-  type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, W0]
+  type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, WC0, W0]
 
-  def withWhere[NW](newWhere: BooleanAction[NW]): SelfT[T, F, MF, EF, NW]
+  def withWhere[NWC, NW](newWhere: BooleanAction[NWC, NW]): SelfT[T, F, MF, EF, NWC, NW]
 
-  final def where[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelfT[T, F, MF, EF, A] =
+  final def where[AC, A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[AC, A]): SelfT[T, F, MF, EF, AC, A] =
     withWhere(f(meta))
 
-  final def whereAnd[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelfT[T, F, MF, EF, (W, A)] =
+  final def whereAnd[AC, A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[AC, A]): SelfT[T, F, MF, EF, WC ~ AC, W ~ A] =
     withWhere(where && f(meta))
 
-  final def whereOr[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelfT[T, F, MF, EF, (W, A)] =
+  final def whereOr[AC, A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[AC, A]): SelfT[T, F, MF, EF, WC ~ AC, W ~ A] =
     withWhere(where || f(meta))
 }

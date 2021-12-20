@@ -7,6 +7,7 @@ package blaireau.dsl.actions
 
 import blaireau.dsl._
 import blaireau.metas.Meta
+import cats.conversions.all.autoWidenBifunctor
 import munit.FunSuite
 import shapeless.the
 import skunk.{Codec, ~}
@@ -14,6 +15,9 @@ import skunk.{Codec, ~}
 class BooleanActionSpec extends FunSuite {
   case class Points(yes: Long, no: Int)
   val pointCodec: Codec[Points] = (int8 ~ int4).gimap[Points]
+
+  case class Something(well: Float)
+  val somethingCodec: Codec[Something] = float4.gimap[Something]
 
   case class Blaireau(name: String, age: Int, points: Points)
   val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec).gimap[Blaireau]
@@ -56,6 +60,18 @@ class BooleanActionSpec extends FunSuite {
     assert(meta.age <= 5, 5, "age <= $1", int4)
   }
 
+//  test("single option isEmpty") {
+//    assert(meta.maybe.isEmpty, skunk.Void, "maybe IS NULL", skunk.Void.codec)
+//  }
+//
+//  test("single option isDefined") {
+//    assert(meta.maybe.isDefined, skunk.Void, "maybe IS NOT NULL", skunk.Void.codec)
+//  }
+//
+//  test("single option contains") {
+//    assert(meta.maybe.contains("Test"), "Test", "(maybe IS NOT NULL AND maybe = $1)", text.opt)
+//  }
+
   test("two operators &&") {
     assert(meta.name === "test" && meta.age <= 5, ("test", 5), "(name = $1 AND age <= $2)", text ~ int4)
   }
@@ -65,7 +81,7 @@ class BooleanActionSpec extends FunSuite {
   }
 
   test("multiple operators parens") {
-    val action: BooleanAction[String ~ Int ~ String] = (meta.name === "test" || meta.age <= 5) && meta.name =!= "tset"
+    val action: IdBooleanAction[String ~ Int ~ String] = (meta.name === "test" || meta.age <= 5) && meta.name =!= "tset"
 
     assert(
       action,
@@ -128,7 +144,7 @@ class BooleanActionSpec extends FunSuite {
     )
   }
 
-  private[this] def assert[A](assign: BooleanAction[A], dummy: A, sql: String, codec: Codec[A]): Unit = {
+  private[this] def assert[CA, A](assign: BooleanAction[CA, A], dummy: A, sql: String, codec: Codec[CA]): Unit = {
     assertEquals(assign.toFragment.sql, sql)
     assertEquals(assign.elt, dummy)
     assertEquals(assign.codec.toString(), codec.toString())

@@ -15,19 +15,19 @@ import skunk.implicits.toStringOps
 import skunk.util.Origin
 import skunk.{Command, Session}
 
-final class DeleteCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, W](
+final class DeleteCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, WC, W](
   tableName: String,
   private[blaireau] val meta: Meta.Aux[T, F, MF, EF],
-  private[blaireau] val where: BooleanAction[W]
-) extends WhereOps[T, F, MF, EF, W] {
-  type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, W0] = DeleteCommandBuilder[T0, F0, MF0, EF0, W0]
+  private[blaireau] val where: BooleanAction[WC, W]
+) extends WhereOps[T, F, MF, EF, WC, W] {
+  type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, WC0, W0] = DeleteCommandBuilder[T0, F0, MF0, EF0, WC0, W0]
 
-  override def withWhere[NW](newWhere: BooleanAction[NW]): DeleteCommandBuilder[T, F, MF, EF, NW] =
-    new DeleteCommandBuilder[T, F, MF, EF, NW](tableName, meta, newWhere)
+  override def withWhere[NWC, NW](newWhere: BooleanAction[NWC, NW]): DeleteCommandBuilder[T, F, MF, EF, NWC, NW] =
+    new DeleteCommandBuilder[T, F, MF, EF, NWC, NW](tableName, meta, newWhere)
 
   def toCommand: Command[W] = {
     val deleteFragment = FragmentUtils.const(s"DELETE FROM $tableName")
-    val whereFragment  = where.toFragment
+    val whereFragment  = where.toFragment.contramap(where.to)
     sql"$deleteFragment WHERE $whereFragment".command
   }
 

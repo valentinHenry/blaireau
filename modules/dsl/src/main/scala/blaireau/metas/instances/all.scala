@@ -8,19 +8,10 @@ package blaireau.metas.instances
 object all extends AllMetaInstances
 
 trait AllMetaInstances
-  extends CodecDerivation
-  with NumericCodecInstances
+  extends NumericCodecInstances
   with BinaryMetaInstances
   with UuidMetaInstances
   with EnumMetaInstances
   with TextCodecInstances
   with BooleanMetaInstances
   with TemporalMetaInstances
-
-trait CodecDerivation {
-  // FIXME EF is not right
-//  implicit final def deriveOptionalMetaType[T, F <: HList, MF <: HList, EF <: HList](implicit
-//    m: Meta.Aux[T, F, MF, EF]
-//  ): Meta.Aux[Option[T], F, MF, Option[EF]] =
-//    Meta(m.codec.opt, m.fields, m.metaFields)(_.map(m.extract))
-}

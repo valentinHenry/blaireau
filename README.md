@@ -6,6 +6,9 @@
 **Blaireau** is a codec derivation helper and a minimalistic type safe SQL DSL for the [Skunk library](https://github.com/tpolecat/skunk)
 
 :warning: **Blaireau** is a personal project in addition to being a work in progress, **hence the lack of documentation, code and functionalities.** 
+
+If this project interests you, feel free to drop a :star: to encourage me working on this.
+
 ## Table of Content
 - [Quickstart with sbt](#quickstart-with-sbt)
 - [Codec derivation](#codec-derivation)

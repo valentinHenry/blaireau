@@ -6,8 +6,7 @@
 package blaireau.dsl.actions
 
 import blaireau.dsl.syntax.MetaFieldAssignmentSyntax
-import blaireau.metas.Meta
-import blaireau.metas.Meta.{ExtractedField, ExtractedMeta}
+import blaireau.metas.{ExtractedField, ExtractedMeta, Meta}
 import blaireau.utils.FragmentUtils
 import shapeless.ops.hlist.{LeftReducer, Mapper}
 import shapeless.{HList, Poly1, Poly2}
@@ -15,13 +14,15 @@ import skunk.implicits.toStringOps
 import skunk.util.Twiddler
 import skunk.{Codec, Fragment, Void, ~}
 
-sealed trait AssignmentAction[A] extends Action[A] with Product with Serializable { self =>
+sealed trait AssignmentAction[A] extends Action[A, A] with Product with Serializable { self =>
   def <+>[B](right: AssignmentAction[B]): AssignmentAction[A ~ B] =
     ForgedAssignment(
       self.codec ~ right.codec,
       (self.elt, right.elt),
       sql"${self.toFragment}, ${right.toFragment}"
     )
+
+  override def to(a: A): A = a
 }
 
 private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: Fragment[A])
