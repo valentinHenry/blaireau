@@ -100,6 +100,15 @@ object Meta {
     private[blaireau] override final def extract(t: T): EF0 = _extract(t)
   }
 
+  implicit def optionalMetaS[A](implicit
+    m: Lazy[MetaS[A]]
+  ): MetaS[Option[A]] =
+    Meta(
+      m.value.codec.opt,
+      m.value.fields,
+      m.value.metaFields
+    )(_ => HNil)
+
   @nowarn
   implicit final def genericMetaEncoder[A, T, CT, F <: HList, MF <: HList, EF <: HList](implicit
     generic: LabelledGeneric.Aux[A, T],
