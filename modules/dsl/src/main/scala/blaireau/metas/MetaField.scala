@@ -13,11 +13,24 @@ trait MetaField[H] extends FieldProduct { self =>
   override type MF = MetaField[H] :: HNil
   override type T  = H
 
-  private[blaireau] override def metaFields: MF = this :: HNil
+  private[blaireau] override def metaFields: MF = self :: HNil
 
   private[blaireau] def sqlName: String
   private[blaireau] def name: String
   private[blaireau] def codec: Codec[H]
 
   override def toString: String = s"MetaField($sqlName:$name:$codec)"
+
+  def opt: OptionalMetaField[H] =
+    new OptionalMetaField[H] {
+      override private[blaireau] final def sqlName: String         = self.sqlName
+      override private[blaireau] final def name: String            = self.name
+      override private[blaireau] final def codec: Codec[Option[H]] = self.codec.opt
+
+      override private[blaireau] final def internal: MetaField[H] = self
+    }
+}
+
+trait OptionalMetaField[H] extends MetaField[Option[H]] {
+  private[blaireau] def internal: MetaField[H]
 }

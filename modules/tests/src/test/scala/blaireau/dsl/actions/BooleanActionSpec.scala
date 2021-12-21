@@ -19,8 +19,8 @@ class BooleanActionSpec extends FunSuite {
   case class Something(well: Float)
   val somethingCodec: Codec[Something] = float4.gimap[Something]
 
-  case class Blaireau(name: String, age: Int, points: Points, maybe: Option[String])
-  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec ~ text.opt).gimap[Blaireau]
+  case class Blaireau(name: String, something: Option[Something], age: Int, points: Points, maybe: Option[String])
+  val blaireauCodec: Codec[Blaireau] = (text ~ somethingCodec.opt ~ int4 ~ pointCodec ~ text.opt).gimap[Blaireau]
 
   val meta = the[Meta[Blaireau]]
 
@@ -67,6 +67,22 @@ class BooleanActionSpec extends FunSuite {
   test("single option isDefined") {
     assert(meta.maybe.isDefined, skunk.Void, "maybe IS NOT NULL", skunk.Void.codec)
   }
+
+  test("single option exists") {
+    assert(meta.maybe.exists(_ === "hmmm"), "hmmm", "(maybe IS NOT NULL AND maybe = $1)", text)
+  }
+
+  test("single option forall") {
+    assert(meta.maybe.forall(_ <> "ok"), "ok", "(maybe IS NULL OR maybe <> $1)", text)
+  }
+
+//  test("embedded option isEmpty") {
+//    assert(meta.something.isEmpty, skunk.Void, "well IS NULL", skunk.Void.codec)
+//  }
+//
+//  test("embedded option isDefined") {
+//    assert(meta.something.isDefined, skunk.Void, "well IS NOT NULL", skunk.Void.codec)
+//  }
 
   test("single option contains") {
     assert(meta.maybe.contains("Test"), "Test", "(maybe IS NOT NULL AND maybe = $1)", text.opt)
