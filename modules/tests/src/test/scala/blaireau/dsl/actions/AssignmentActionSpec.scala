@@ -9,6 +9,7 @@ import munit.FunSuite
 import blaireau.metas.Meta
 import shapeless.the
 import blaireau.dsl._
+import blaireau.dsl.assignment.AssignmentAction
 import skunk.{Codec, ~}
 class AssignmentActionSpec extends FunSuite {
 

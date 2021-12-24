@@ -5,7 +5,8 @@
 
 package blaireau
 
+import blaireau.dsl.assignment.MetaFieldAssignmentSyntax
+import blaireau.dsl.filtering.MetaFieldBooleanSyntax
 import blaireau.metas.instances.AllMetaInstances
-import blaireau.dsl.syntax.{MetaFieldAssignmentSyntax, MetaFieldBooleanSyntax}
 
 package object dsl extends AllMetaInstances with MetaFieldBooleanSyntax with MetaFieldAssignmentSyntax {}

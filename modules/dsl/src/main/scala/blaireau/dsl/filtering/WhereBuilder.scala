@@ -1,16 +1,10 @@
-// Written by Valentin "Firiath" Henry
-//
-// This software is licensed under the MIT License (MIT).
-// For more information see LICENSE or https://opensource.org/licenses/MIT
+package blaireau.dsl.filtering
 
-package blaireau.dsl.builders
-
-import blaireau.dsl.actions.BooleanAction
 import blaireau.metas.Meta
 import shapeless.HList
 import skunk.~
 
-trait WhereOps[T, F <: HList, MF <: HList, EF <: HList, OEF <: HList, WC, W] {
+trait WhereBuilder[T, F <: HList, MF <: HList, EF <: HList, OEF <: HList, WC, W] {
   private[blaireau] def where: BooleanAction[WC, W]
   private[blaireau] def meta: Meta.Aux[T, F, MF, EF, OEF]
 

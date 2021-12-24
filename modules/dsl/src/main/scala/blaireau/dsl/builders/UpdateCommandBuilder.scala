@@ -5,7 +5,8 @@
 
 package blaireau.dsl.builders
 
-import blaireau.dsl.actions.{AssignmentAction, BooleanAction}
+import blaireau.dsl.assignment.AssignmentAction
+import blaireau.dsl.filtering.{BooleanAction, WhereBuilder}
 import blaireau.metas.Meta
 import blaireau.utils.FragmentUtils
 import cats.effect.MonadCancelThrow
@@ -19,7 +20,7 @@ final class UpdateCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, OEF <:
   private[blaireau] val meta: Meta.Aux[T, F, MF, EF, OEF],
   updatedFields: AssignmentAction[U],
   private[blaireau] val where: BooleanAction[WC, W]
-) extends WhereOps[T, F, MF, EF, OEF, WC, W] {
+) extends WhereBuilder[T, F, MF, EF, OEF, WC, W] {
 
   override type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, OEF0 <: HList, WC0, W0] =
     UpdateCommandBuilder[T0, F0, MF0, EF0, OEF0, U, WC0, W0]

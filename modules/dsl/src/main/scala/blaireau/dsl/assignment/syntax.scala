@@ -3,10 +3,9 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl.syntax
+package blaireau.dsl.assignment
 
-import blaireau.dsl.actions.AssignmentAction._
-import blaireau.dsl.actions.{AssignmentAction, actionAssignmentFolder, assignmentApplier}
+import AssignmentAction._
 import blaireau.metas.{Meta, MetaField}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}

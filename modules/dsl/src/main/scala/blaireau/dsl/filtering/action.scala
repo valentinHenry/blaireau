@@ -3,9 +3,10 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl.actions
+package blaireau.dsl.filtering
 
-import blaireau.dsl.syntax.MetaFieldBooleanSyntax
+import blaireau.dsl.actions.{Action, IMapper}
+import blaireau.dsl.filtering
 import blaireau.metas.{ExtractedField, ExtractedMeta, Meta}
 import blaireau.utils.FragmentUtils
 import shapeless.ops.hlist.{LeftReducer, Mapper}
@@ -16,7 +17,7 @@ import skunk.{Codec, Fragment, Void, ~}
 
 sealed trait BooleanAction[AC, A] extends Action[AC, A] with Product with Serializable { self =>
   def &&[BC, B](right: BooleanAction[BC, B]): BooleanAction[AC ~ BC, A ~ B] =
-    ForgedBoolean(
+    filtering.ForgedBoolean(
       self.codec ~ right.codec,
       (self.elt, right.elt),
       sql"(${self.toFragment} AND ${right.toFragment})",
@@ -24,7 +25,7 @@ sealed trait BooleanAction[AC, A] extends Action[AC, A] with Product with Serial
     )
 
   def ||[BC, B](right: BooleanAction[BC, B]): BooleanAction[AC ~ BC, A ~ B] =
-    ForgedBoolean(
+    filtering.ForgedBoolean(
       self.codec ~ right.codec,
       self.elt ~ right.elt,
       sql"(${self.toFragment} OR ${right.toFragment})",

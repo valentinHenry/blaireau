@@ -5,8 +5,9 @@
 
 package blaireau.dsl
 
-import blaireau.dsl.actions.{AssignmentAction, BooleanAction, actionAssignmentFolder, assignmentApplier}
+import blaireau.dsl.assignment.{AssignmentAction, actionAssignmentFolder, assignmentApplier}
 import blaireau.dsl.builders.{DeleteCommandBuilder, InsertCommandBuilder, SelectQueryBuilder, UpdateCommandBuilder}
+import blaireau.dsl.filtering.BooleanAction
 import blaireau.metas.{FieldProduct, Meta, MetaField}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper, ToList}

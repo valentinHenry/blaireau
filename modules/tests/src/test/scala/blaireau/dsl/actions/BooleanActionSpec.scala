@@ -6,8 +6,8 @@
 package blaireau.dsl.actions
 
 import blaireau.dsl._
+import blaireau.dsl.filtering.{BooleanAction, IdBooleanAction}
 import blaireau.metas.Meta
-import cats.conversions.all.autoWidenBifunctor
 import munit.FunSuite
 import shapeless.the
 import skunk.{Codec, ~}

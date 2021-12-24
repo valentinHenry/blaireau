@@ -39,6 +39,10 @@ lazy val blaireau = project
 
 lazy val `codec-derivation` = project
   .in(file("modules/derivation"))
+  .settings(
+    name        := "blaireau-derivation",
+    description := "An automatic and semi-automatic codec derivation for Skunk."
+  )
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -51,6 +55,10 @@ lazy val `codec-derivation` = project
 
 lazy val dsl = project
   .in(file("modules/dsl"))
+  .settings(
+    name        := "blaireau-dsl",
+    description := "A postgresql DSL for Skunk."
+  )
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -63,6 +71,10 @@ lazy val dsl = project
 
 lazy val tests = project
   .in(file("modules/tests"))
+  .settings(
+    name        := "blaireau-tests",
+    description := "Test suite of Blaireau."
+  )
   .settings(commonSettings)
   .settings(
     publish / skip := true,

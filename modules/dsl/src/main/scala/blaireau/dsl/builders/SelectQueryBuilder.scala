@@ -5,7 +5,7 @@
 
 package blaireau.dsl.builders
 
-import blaireau.dsl.actions.BooleanAction
+import blaireau.dsl.filtering.{BooleanAction, WhereBuilder}
 import blaireau.metas.Meta
 import blaireau.utils.FragmentUtils
 import cats.effect.MonadCancelThrow
@@ -22,7 +22,7 @@ final class SelectQueryBuilder[T, F <: HList, MF <: HList, EF <: HList, OEF <: H
   select: List[String],
   selectCodec: Codec[SC],
   private[blaireau] val where: BooleanAction[WC, W]
-) extends WhereOps[T, F, MF, EF, OEF, WC, W] {
+) extends WhereBuilder[T, F, MF, EF, OEF, WC, W] {
 
   override type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, OEF0 <: HList, WC0, W0] =
     SelectQueryBuilder[T0, F0, MF0, EF0, OEF0, SC, WC0, W0]

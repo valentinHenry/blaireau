@@ -3,9 +3,10 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl.actions
+package blaireau.dsl.assignment
 
-import blaireau.dsl.syntax.MetaFieldAssignmentSyntax
+import blaireau.dsl.actions.{Action, IMapper}
+import blaireau.dsl.assignment
 import blaireau.metas.{ExtractedField, ExtractedMeta, Meta}
 import blaireau.utils.FragmentUtils
 import shapeless.ops.hlist.{LeftReducer, Mapper}
@@ -16,7 +17,7 @@ import skunk.{Codec, Fragment, Void, ~}
 
 sealed trait AssignmentAction[A] extends Action[A, A] with Product with Serializable { self =>
   def <+>[B](right: AssignmentAction[B]): AssignmentAction[A ~ B] =
-    ForgedAssignment(
+    assignment.ForgedAssignment(
       self.codec ~ right.codec,
       (self.elt, right.elt),
       sql"${self.toFragment}, ${right.toFragment}"

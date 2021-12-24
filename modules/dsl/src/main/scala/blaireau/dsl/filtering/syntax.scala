@@ -3,10 +3,9 @@
 // This software is licensed under the MIT License (MIT).
 // For more information see LICENSE or https://opensource.org/licenses/MIT
 
-package blaireau.dsl.syntax
+package blaireau.dsl.filtering
 
-import blaireau.dsl.actions._
-import blaireau.dsl.actions.BooleanAction._
+import blaireau.dsl.filtering.BooleanAction._
 import blaireau.metas.{Meta, MetaField, OptionalMetaField}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}
