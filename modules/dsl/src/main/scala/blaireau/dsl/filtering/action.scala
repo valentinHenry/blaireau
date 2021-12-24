@@ -7,7 +7,7 @@ package blaireau.dsl.filtering
 
 import blaireau.dsl.actions.{Action, IMapper}
 import blaireau.dsl.filtering
-import blaireau.metas.{ExtractedField, ExtractedMeta, Meta}
+import blaireau.metas.{ExtractedField, ExtractedMeta, Meta, MetaUtils}
 import blaireau.utils.FragmentUtils
 import shapeless.ops.hlist.{LeftReducer, Mapper}
 import shapeless.{HList, Poly1, Poly2}
@@ -44,8 +44,8 @@ private[blaireau] final case class ForgedBoolean[C, A](
 }
 
 object BooleanAction {
-  implicit def imapper[A]: IMapper[IdBooleanAction, A] = new IMapper[IdBooleanAction, A] {
-    override def imap[B](m: IdBooleanAction[A])(f: A => B)(g: B => A): IdBooleanAction[B] =
+  implicit def imapper: IMapper[IdBooleanAction] = new IMapper[IdBooleanAction] {
+    override def imap[A, B](m: IdBooleanAction[A])(f: A => B)(g: B => A): IdBooleanAction[B] =
       BooleanAction.imap(m)(f)(f)(g)(identity)
   }
 
@@ -81,9 +81,9 @@ object BooleanAction {
     ev: FO =:= IdBooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
   ): IdBooleanAction[A] =
-    Meta.applyFn[booleanEqAndApplier.type, actionBooleanAndFolder.type, A, F, MF, EF, OEF, MO, FO, CO, IdBooleanAction](
-      meta,
-      elt
+    MetaUtils.applyExtract[booleanEqAndApplier.type, actionBooleanAndFolder.type, A, EF, MO, FO, CO, IdBooleanAction](
+      elt,
+      meta.extract
     )
 
   private[blaireau] def booleanEqOr[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](
@@ -95,9 +95,9 @@ object BooleanAction {
     ev: FO =:= IdBooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
   ): IdBooleanAction[A] =
-    Meta.applyFn[booleanEqOrApplier.type, actionBooleanOrFolder.type, A, F, MF, EF, OEF, MO, FO, CO, IdBooleanAction](
-      meta,
-      elt
+    MetaUtils.applyExtract[booleanEqOrApplier.type, actionBooleanOrFolder.type, A, EF, MO, FO, CO, IdBooleanAction](
+      elt,
+      meta.extract
     )
 
   private[blaireau] def booleanNEqAnd[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](
@@ -109,11 +109,10 @@ object BooleanAction {
     ev: FO =:= IdBooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
   ): IdBooleanAction[A] =
-    Meta
-      .applyFn[booleanNEqAndApplier.type, actionBooleanAndFolder.type, A, F, MF, EF, OEF, MO, FO, CO, IdBooleanAction](
-        meta,
-        elt
-      )
+    MetaUtils.applyExtract[booleanNEqAndApplier.type, actionBooleanAndFolder.type, A, EF, MO, FO, CO, IdBooleanAction](
+      elt,
+      meta.extract
+    )
 
   private[blaireau] def booleanNEqOr[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](
     meta: Meta.Aux[A, F, MF, EF, OEF],
@@ -124,9 +123,9 @@ object BooleanAction {
     ev: FO =:= IdBooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
   ): IdBooleanAction[A] =
-    Meta.applyFn[booleanNEqOrApplier.type, actionBooleanOrFolder.type, A, F, MF, EF, OEF, MO, FO, CO, IdBooleanAction](
-      meta,
-      elt
+    MetaUtils.applyExtract[booleanNEqOrApplier.type, actionBooleanOrFolder.type, A, EF, MO, FO, CO, IdBooleanAction](
+      elt,
+      meta.extract
     )
 
   final case class BooleanEq[A](sqlField: String, codec: Codec[A], elt: A)

@@ -7,12 +7,8 @@ package blaireau.dsl.assignment
 
 import blaireau.dsl.actions.{Action, IMapper}
 import blaireau.dsl.assignment
-import blaireau.metas.{ExtractedField, ExtractedMeta, Meta}
 import blaireau.utils.FragmentUtils
-import shapeless.ops.hlist.{LeftReducer, Mapper}
-import shapeless.{HList, Poly1, Poly2}
 import skunk.implicits.toStringOps
-import skunk.util.Twiddler
 import skunk.{Codec, Fragment, Void, ~}
 
 sealed trait AssignmentAction[A] extends Action[A, A] with Product with Serializable { self =>
@@ -32,8 +28,8 @@ private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: 
 }
 
 object AssignmentAction {
-  implicit def imapper[A]: IMapper[AssignmentAction, A] = new IMapper[AssignmentAction, A] {
-    override def imap[B](m: AssignmentAction[A])(f: A => B)(g: B => A): AssignmentAction[B] =
+  implicit def imapper: IMapper[AssignmentAction] = new IMapper[AssignmentAction] {
+    override def imap[A, B](m: AssignmentAction[A])(f: A => B)(g: B => A): AssignmentAction[B] =
       ForgedAssignment(
         m.codec.imap(f)(g),
         f(m.elt),
@@ -41,21 +37,9 @@ object AssignmentAction {
       )
   }
 
-  private[blaireau] def assignMeta[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](
-    meta: Meta.Aux[A, F, MF, EF, OEF],
-    elt: A
-  )(implicit
-    mapper: Mapper.Aux[assignmentApplier.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
-    ev: FO =:= AssignmentAction[CO],
-    tw: Twiddler.Aux[A, CO]
-  ): AssignmentAction[A] =
-    Meta.applyFn[assignmentApplier.type, actionAssignmentFolder.type, A, F, MF, EF, OEF, MO, FO, CO, AssignmentAction](
-      meta,
-      elt
-    )
-
   private[blaireau] def empty: AssignmentAction[Void] = ForgedAssignment(Void.codec, Void, Fragment.empty)
+  private[blaireau] def none[A]: AssignmentAction[Option[A]] =
+    imapper.imap(empty)(_ => cats.syntax.option.none[A])(_ => Void)
 
   case class AssignmentOp[A](sqlField: String, codec: Codec[A], elt: A)
     extends Action.Op[A]("=", sqlField)
@@ -68,24 +52,4 @@ object AssignmentAction {
   case class AssignmentDecr[A](sqlField: String, codec: Codec[A], elt: A) extends AssignmentAction[A] {
     override def toFragment: Fragment[A] = FragmentUtils.withValue(s"$sqlField = $sqlField - ", codec)
   }
-}
-
-object assignmentApplier extends Poly1 with MetaFieldAssignmentSyntax {
-  implicit def fieldAssignment[A]: Case.Aux[ExtractedField[A], AssignmentAction[A]] = at { case (field, elt) =>
-    field := elt
-  }
-
-  implicit def metaAssignment[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](implicit
-    mapper: Mapper.Aux[this.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
-    ev: FO =:= AssignmentAction[CO],
-    tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF, OEF], AssignmentAction[A]] = at { case (meta, elt) =>
-    AssignmentAction.assignMeta(meta, elt)
-  }
-}
-
-object actionAssignmentFolder extends Poly2 {
-  implicit def folder[A, B]: Case.Aux[AssignmentAction[A], AssignmentAction[B], AssignmentAction[A ~ B]] =
-    at(_ <+> _)
 }

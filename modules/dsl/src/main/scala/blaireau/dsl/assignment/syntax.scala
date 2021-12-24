@@ -6,7 +6,7 @@
 package blaireau.dsl.assignment
 
 import AssignmentAction._
-import blaireau.metas.{Meta, MetaField}
+import blaireau.metas.{Meta, MetaField, MetaUtils}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}
 import skunk.util.Twiddler
@@ -38,7 +38,11 @@ object MetaFieldAssignmentOps {
       ev: LRO =:= AssignmentAction[UF],
       tw: Twiddler.Aux[T, UF]
     ): AssignmentAction[T] =
-      AssignmentAction.assignMeta(meta, right)
+      MetaUtils
+        .applyExtract[assignmentApplier.type, actionAssignmentFolder.type, T, EF, MEF, LRO, UF, AssignmentAction](
+          right,
+          meta.extract
+        )
   }
 
   final class MetaFieldOps[T](mf: MetaField[T]) {

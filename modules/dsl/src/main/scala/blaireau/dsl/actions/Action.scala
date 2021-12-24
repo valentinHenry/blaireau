@@ -24,6 +24,6 @@ object Action {
   }
 }
 
-trait IMapper[M[_], A] {
-  def imap[B](m: M[A])(f: A => B)(g: B => A): M[B]
+trait IMapper[M[_]] {
+  def imap[A, B](m: M[A])(f: A => B)(g: B => A): M[B]
 }

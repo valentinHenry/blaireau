@@ -5,19 +5,22 @@
 
 package blaireau.dsl.actions
 
-import munit.FunSuite
-import blaireau.metas.Meta
-import shapeless.the
 import blaireau.dsl._
 import blaireau.dsl.assignment.AssignmentAction
+import blaireau.metas.Meta
+import munit.FunSuite
+import shapeless.the
 import skunk.{Codec, ~}
 class AssignmentActionSpec extends FunSuite {
 
   case class Points(yes: Long, no: Int)
   val pointCodec: Codec[Points] = (int8 ~ int4).gimap[Points]
 
-  case class Blaireau(name: String, age: Int, points: Points)
-  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec).gimap[Blaireau]
+  case class Maybe(ok: Int, oui: Option[Long])
+  val maybeCodec = (int4 ~ int8.opt).gimap[Maybe]
+
+  case class Blaireau(name: String, age: Int, points: Points, something: Option[String], maybe: Option[Maybe])
+  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec ~ text.opt ~ maybeCodec.opt).gimap[Blaireau]
 
   val meta = the[Meta[Blaireau]]
 
@@ -36,8 +39,13 @@ class AssignmentActionSpec extends FunSuite {
   }
 
   test("Full assignation") {
-    val dummy = Blaireau("test", 5, Points(5L, 4))
-    assert(meta := dummy, dummy, "name = $1, age = $2, yes = $3, no = $4", blaireauCodec)
+    val dummy = Blaireau("test", 5, Points(5L, 4), None, Some(Maybe(5, None)))
+    assert(
+      meta := dummy,
+      dummy,
+      "name = $1, age = $2, yes = $3, no = $4, something = $5, ok = $6, oui = $7",
+      blaireauCodec
+    )
   }
 
   private[this] def assert[A](assign: AssignmentAction[A], dummy: A, sql: String, codec: Codec[A]): Unit = {
