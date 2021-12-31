@@ -38,8 +38,12 @@ class AssignmentActionSpec extends FunSuite {
     assert(meta.points := dummy, dummy, "yes = $1, no = $2", pointCodec)
   }
 
+  test("One embedded optional assignation") {
+    assert(meta.maybe := None, None, "ok = $1, oui = $2", maybeCodec.opt)
+  }
+
   test("Full assignation") {
-    val dummy = Blaireau("test", 5, Points(5L, 4), None, Some(Maybe(5, None)))
+    val dummy = Blaireau("test", 5, Points(5L, 4), None, None)
     assert(
       meta := dummy,
       dummy,

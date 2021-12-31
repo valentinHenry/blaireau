@@ -16,21 +16,23 @@ import skunk.~
 import scala.annotation.unused
 
 trait MetaFieldBooleanSyntax {
-  import MetaFieldOps._
-  implicit final def metaEltOpsSyntax[T, F <: HList, MF <: HList, EF <: HList, OEF <: HList](
-    m: Meta.Aux[T, F, MF, EF, OEF]
-  ): MetaEltOps[T, F, MF, EF, OEF] =
-    new MetaEltOps[T, F, MF, EF, OEF](m)
 
-//  implicit final def optionalMetaEltOpsSyntax[
-//    T,
-//    MF <: HList,
-//    EF <: HList,
-//    IF <: HList,
-//    IMF <: HList,
-//    IEF <: HList,
-//    IOEF <: HList
-//  ](m: OptionalMeta.Aux[T, MF, EF, IF, IMF, IEF, IOEF]): OptionalMetaEltOps[T, MF, EF, IF, IMF, IEF, IOEF] =
+  import MetaFieldOps._
+
+  implicit final def metaEltOpsSyntax[T, F <: HList, MF <: HList, EF <: HList](
+    m: Meta.Aux[T, F, MF, EF]
+  ): MetaEltOps[T, F, MF, EF] =
+    new MetaEltOps[T, F, MF, EF](m)
+
+  //  implicit final def optionalMetaEltOpsSyntax[
+  //    T,
+  //    MF <: HList,
+  //    EF <: HList,
+  //    IF <: HList,
+  //    IMF <: HList,
+  //    IEF <: HList,
+  //    IOEF <: HList
+  //  ](m: OptionalMeta.Aux[T, MF, EF, IF, IMF, IEF, IOEF]): OptionalMetaEltOps[T, MF, EF, IF, IMF, IEF, IOEF] =
 //    new OptionalMetaEltOps(m)
 
   implicit final def optionMetaFieldSyntax[T](f: OptionalMetaField[T]): OptionMetaFieldOp[T] =
@@ -47,7 +49,7 @@ trait MetaFieldBooleanSyntax {
 }
 
 object MetaFieldOps {
-  class MetaEltOps[T, F <: HList, MF <: HList, EF <: HList, OEF <: HList](meta: Meta.Aux[T, F, MF, EF, OEF]) {
+  class MetaEltOps[T, F <: HList, MF <: HList, EF <: HList](meta: Meta.Aux[T, F, MF, EF]) {
     def ===[MEF <: HList, LRO, UF](right: T)(implicit
       m: Mapper.Aux[booleanEqAndApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionBooleanAndFolder.type, LRO],

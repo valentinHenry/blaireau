@@ -1,7 +1,6 @@
 package blaireau.dsl.assignment
 
 import blaireau.metas._
-import cats.implicits.catsSyntaxOptionId
 import shapeless.ops.hlist.{LeftReducer, Mapper}
 import shapeless.{HList, Poly1, Poly2}
 import skunk.util.Twiddler
@@ -22,7 +21,7 @@ object assignmentApplier extends Poly1 with MetaFieldAssignmentSyntax {
     r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
     ev: FO =:= AssignmentAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF, OEF], AssignmentAction[A]] = at { case (meta, elt) =>
+  ): Case.Aux[ExtractedMeta[A, F, MF, EF], AssignmentAction[A]] = at { case (meta, elt) =>
     MetaUtils.applyExtract[this.type, actionAssignmentFolder.type, A, EF, MO, FO, CO, AssignmentAction](
       elt,
       meta.extract
@@ -40,21 +39,15 @@ object assignmentApplier extends Poly1 with MetaFieldAssignmentSyntax {
     FO,
     CO
   ](implicit
-    mapper: Mapper.Aux[this.type, IEF, MO],
+    mapper: Mapper.Aux[this.type, EF, MO],
     r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
     ev: FO =:= AssignmentAction[CO],
-    tw: Twiddler.Aux[A, CO]
+    tw: Twiddler.Aux[Option[A], CO]
   ): Case.Aux[ExtractedOptionalMeta[A, MF, EF, IF, IMF, IEF], AssignmentAction[Option[A]]] = at { case (meta, elt) =>
-    elt match {
-      case None => AssignmentAction.none[A]
-      case Some(elt) =>
-        AssignmentAction.imapper.imap(
-          MetaUtils.applyExtract[this.type, actionAssignmentFolder.type, A, IEF, MO, FO, CO, AssignmentAction](
-            elt,
-            meta.internal.extract
-          )
-        )(_.some)(_.get)
-    }
+    MetaUtils.applyExtract[this.type, actionAssignmentFolder.type, Option[A], EF, MO, FO, CO, AssignmentAction](
+      elt,
+      meta.extract
+    )
   }
 }
 

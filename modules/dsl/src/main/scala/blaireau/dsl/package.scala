@@ -5,8 +5,13 @@
 
 package blaireau
 
+import blaireau.dsl.actions.TwiddlerInstances
 import blaireau.dsl.assignment.MetaFieldAssignmentSyntax
 import blaireau.dsl.filtering.MetaFieldBooleanSyntax
 import blaireau.metas.instances.AllMetaInstances
 
-package object dsl extends AllMetaInstances with MetaFieldBooleanSyntax with MetaFieldAssignmentSyntax {}
+package object dsl
+  extends AllMetaInstances
+  with MetaFieldBooleanSyntax
+  with MetaFieldAssignmentSyntax
+  with TwiddlerInstances {}

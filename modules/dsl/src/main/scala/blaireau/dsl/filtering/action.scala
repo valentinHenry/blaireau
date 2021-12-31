@@ -62,7 +62,8 @@ object BooleanAction {
   trait VoidBooleanAction extends IdBooleanAction[Void] {
     final override def to(a: Void): Void  = a
     final override val codec: Codec[Void] = Void.codec
-    final override def elt: Void          = Void
+
+    final override def elt: Void = Void
   }
 
   def empty: IdBooleanAction[Void] = ForgedBoolean(
@@ -72,8 +73,8 @@ object BooleanAction {
     identity
   )
 
-  private[blaireau] def booleanEqAnd[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](
-    meta: Meta.Aux[A, F, MF, EF, OEF],
+  private[blaireau] def booleanEqAnd[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
+    meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
     mapper: Mapper.Aux[booleanEqAndApplier.type, EF, MO],
@@ -86,8 +87,8 @@ object BooleanAction {
       meta.extract
     )
 
-  private[blaireau] def booleanEqOr[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](
-    meta: Meta.Aux[A, F, MF, EF, OEF],
+  private[blaireau] def booleanEqOr[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
+    meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
     mapper: Mapper.Aux[booleanEqOrApplier.type, EF, MO],
@@ -100,8 +101,8 @@ object BooleanAction {
       meta.extract
     )
 
-  private[blaireau] def booleanNEqAnd[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](
-    meta: Meta.Aux[A, F, MF, EF, OEF],
+  private[blaireau] def booleanNEqAnd[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
+    meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
     mapper: Mapper.Aux[booleanNEqAndApplier.type, EF, MO],
@@ -114,8 +115,8 @@ object BooleanAction {
       meta.extract
     )
 
-  private[blaireau] def booleanNEqOr[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](
-    meta: Meta.Aux[A, F, MF, EF, OEF],
+  private[blaireau] def booleanNEqOr[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
+    meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
     mapper: Mapper.Aux[booleanNEqOrApplier.type, EF, MO],
@@ -182,23 +183,23 @@ class BooleanEqApplier extends Poly1 with MetaFieldBooleanSyntax {
 }
 
 object booleanEqAndApplier extends BooleanEqApplier {
-  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](implicit
+  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
     mapper: Mapper.Aux[this.type, EF, MO],
     r: LeftReducer.Aux[MO, actionBooleanAndFolder.type, FO],
     ev: FO =:= IdBooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF, OEF], IdBooleanAction[A]] = at { case (field, elt) =>
+  ): Case.Aux[ExtractedMeta[A, F, MF, EF], IdBooleanAction[A]] = at { case (field, elt) =>
     BooleanAction.booleanEqAnd(field, elt)
   }
 }
 
 object booleanEqOrApplier extends BooleanEqApplier {
-  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](implicit
+  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
     mapper: Mapper.Aux[this.type, EF, MO],
     r: LeftReducer.Aux[MO, actionBooleanOrFolder.type, FO],
     ev: FO =:= IdBooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF, OEF], IdBooleanAction[A]] = at { case (field, elt) =>
+  ): Case.Aux[ExtractedMeta[A, F, MF, EF], IdBooleanAction[A]] = at { case (field, elt) =>
     BooleanAction.booleanEqOr(field, elt)
   }
 }
@@ -208,23 +209,23 @@ class BooleanNEqApplier extends Poly1 with MetaFieldBooleanSyntax {
 }
 
 object booleanNEqAndApplier extends BooleanNEqApplier {
-  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](implicit
+  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
     mapper: Mapper.Aux[this.type, EF, MO],
     r: LeftReducer.Aux[MO, actionBooleanAndFolder.type, FO],
     ev: FO =:= IdBooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF, OEF], IdBooleanAction[A]] = at { case (meta, elt) =>
+  ): Case.Aux[ExtractedMeta[A, F, MF, EF], IdBooleanAction[A]] = at { case (meta, elt) =>
     BooleanAction.booleanNEqAnd(meta, elt)
   }
 }
 
 object booleanNEqOrApplier extends BooleanNEqApplier {
-  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](implicit
+  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
     mapper: Mapper.Aux[this.type, EF, MO],
     r: LeftReducer.Aux[MO, actionBooleanOrFolder.type, FO],
     ev: FO =:= IdBooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF, OEF], IdBooleanAction[A]] = at { case (meta, elt) =>
+  ): Case.Aux[ExtractedMeta[A, F, MF, EF], IdBooleanAction[A]] = at { case (meta, elt) =>
     BooleanAction.booleanNEqOr(meta, elt)
   }
 }
