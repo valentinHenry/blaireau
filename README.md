@@ -167,17 +167,22 @@ val cities: Query[Void, String] = users.select(_.address.city)
 #### Where DSL
 A Where clause can be created using boolean operators:
 
-|  Type Constraint  | Scala |     Postgresql    | Blaireau |
-|:-----------------:|:-----:|:-----------------:|:--------:|
-|        Any        |   ==  |         =         |    ===   |
-|        Any        |       |                   |    =~=   |
-|        Any        |   !=  |         <>        |    <>    |
-|        Any        |       |                   |    =!=   |
-| Numeric \| String |   <   |         <         |     <    |
-| Numeric \| String |   <=  |         <=        |    <=    |
-| Numeric \| String |   >   |         >         |     >    |
-| Numeric \| String |   >=  |         >=        |    >=    |
-|       String      |       |        like       |   like   |
+| Type Constraint |   Scala   | Postgresql  | Blaireau  |
+|:---------------:|:---------:|:-----------:|:---------:|
+|       Any       |    ==     |      =      |    ===    |
+|       Any       |           |             |    =~=    |
+|       Any       |    !=     |     <>      |    <>     |
+|       Any       |           |             |    =!=    |
+|    Numeric \|  String   |      <      |     <     |     <    |
+|    Numeric \|  String   |     <=      |    <=     |    <=    |
+|    Numeric \|  String   |      >      |     >     |     >    |
+|    Numeric \|  String   |     >=      |    >=     |    >=    |
+|     String      |           |    like     |   like    |
+|    Optional     |  isEmpty  |   IS NULL   |  isEmpty  |
+|    Optional     | isDefined | IS NOT NULL | isDefined |
+|    Optional     | contains  |             | contains  |
+|    Optional     |  exists   |             |  exists   |
+|    Optional     |  forall   |             |  forall   |
 
 Those can be combined with operators:
 
@@ -192,13 +197,16 @@ The `Where` clause can be composed using `whereAnd(...)` and `whereOr(...)` func
 
 The operators `===`, `=~=`, `<>` and `=!=` are both compatible with nested objects applying the operator on all fields.
 
-The difference between `<>` and `=!=`: the first one returns true if one of the field is not the same, the later
-checks for a full inequality.
+The optional operators are compatible with simple fields and nested objects.
+
+The difference between `<>` and `=!=`: the first one returns true if one of the field is not the same, the later checks
+for a full inequality.
 
 The difference between `=~=` and `===`: the first one returns true if one of the field is the same, the latter checks
 for full equality.
 
 Examples:
+
 ```scala
 val findById = users.select.where(_.id === id)...
 
