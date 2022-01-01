@@ -32,8 +32,8 @@ lazy val blaireau = project
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .dependsOn(dsl, refined, newtype, tests)
-  .aggregate(dsl, refined, newtype, tests)
+  .dependsOn(dsl, refined, newtype, circe, tests)
+  .aggregate(dsl, refined, newtype, circe, tests)
   .enablePlugins(ScalafmtPlugin)
   .enablePlugins(AutomateHeaderPlugin)
 
@@ -77,6 +77,18 @@ lazy val refined = project
   .enablePlugins(ScalafmtPlugin)
   .dependsOn(dsl)
 
+lazy val circe = project
+  .in(file("modules/circe"))
+  .settings(
+    name        := "blaireau-circe",
+    description := "Metas for circe json objects."
+  )
+  .settings(commonSettings)
+  .settings(libraryDependencies += Dependencies.`skunk-circe`)
+  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(ScalafmtPlugin)
+  .dependsOn(dsl)
+
 lazy val tests = project
   .in(file("modules/tests"))
   .settings(
@@ -88,4 +100,4 @@ lazy val tests = project
   .settings(libraryDependencies += Dependencies.`munit`)
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
-  .dependsOn(dsl, refined, newtype)
+  .dependsOn(dsl, refined, newtype, circe)

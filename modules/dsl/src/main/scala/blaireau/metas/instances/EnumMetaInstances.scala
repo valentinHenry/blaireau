@@ -14,9 +14,9 @@ import skunk.data.Type
 trait EnumMetaInstances {
   def enumMeta[A, E <: ValueEnumEntry[A]](
     `enum`: ValueEnum[A, E]
-  )(implicit m: MetaS[A]): MetaS[ValueEnumEntry[A]] = {
+  )(implicit m: MetaS[A]): MetaS[E] = {
     val codec = m.codec
-      .eimap[ValueEnumEntry[A]](a => `enum`.withValueOpt(a).toRight(s"${`enum`}: no such element '$a'"))(_.value)
+      .eimap[E](a => `enum`.withValueOpt(a).toRight(s"${`enum`}: no such element '$a'"))(_.value)
 
     Meta.of(codec)
   }
