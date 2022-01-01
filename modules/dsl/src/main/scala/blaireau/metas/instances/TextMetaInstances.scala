@@ -5,10 +5,9 @@
 
 package blaireau.metas.instances
 
+import blaireau.Configuration
 import blaireau.metas.{Meta, MetaS}
-import skunk.codec.text.text
 
 trait TextMetaInstances {
-  // TODO find a solution for bpchar and varchar...
-  implicit val stringMeta: MetaS[String] = Meta.of(text)
+  implicit def stringMeta(implicit c: Configuration): MetaS[String] = Meta.of(c.stringCodec)
 }

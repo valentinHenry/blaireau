@@ -13,7 +13,6 @@ import shapeless.the
 import skunk.codec.all._
 import skunk.{Codec, ~}
 class AssignmentActionSpec extends FunSuite {
-
   case class Points(yes: Long, no: Int)
   val pointCodec: Codec[Points] = (int8 ~ int4).gimap[Points]
 

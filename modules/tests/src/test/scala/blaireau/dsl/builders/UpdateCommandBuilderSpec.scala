@@ -10,7 +10,6 @@ import munit.FunSuite
 import skunk.{Command, ~}
 
 class UpdateCommandBuilderSpec extends FunSuite {
-
   case class Blaireau(name: String, age: Int)
   val blaireaux = Table[Blaireau]("blaireaux")
 

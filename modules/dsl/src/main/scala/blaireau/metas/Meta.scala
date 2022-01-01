@@ -5,6 +5,7 @@
 
 package blaireau.metas
 
+import blaireau.Configuration
 import shapeless.labelled.{FieldType, field}
 import shapeless.ops.hlist.{Init, Last, Prepend}
 import shapeless.ops.record.Selector
@@ -134,7 +135,8 @@ object Meta {
     implicit def baseField[K <: Symbol, H](implicit
       w: Witness.Aux[K],
       hMeta: Lazy[MetaS[H]],
-      evNotOption: H <:!< Option[_]
+      evNotOption: H <:!< Option[_],
+      c: Configuration
     ): Meta0.Aux[
       FieldType[K, H] :: HNil,
       H,
@@ -144,7 +146,7 @@ object Meta {
     ] = {
       val fieldName: String = w.value.name
       val metaField = new MetaField[H] {
-        override val sqlName: String = fieldName
+        override val sqlName: String = c.fieldFormatter.formatField(fieldName)
         override val name: String    = fieldName
         override val codec: Codec[H] = hMeta.value.codec
       }
@@ -164,7 +166,8 @@ object Meta {
 
     implicit def baseOptionalField[K <: Symbol, H](implicit
       w: Witness.Aux[K],
-      hMeta: Lazy[MetaS[H]]
+      hMeta: Lazy[MetaS[H]],
+      c: Configuration
     ): Meta0.Aux[
       FieldType[K, Option[H]] :: HNil,
       Option[H],
@@ -175,7 +178,7 @@ object Meta {
       val fieldName: String = w.value.name
 
       val metaField: OptionalMetaField[H] = new MetaField[H] {
-        override val sqlName: String = fieldName
+        override val sqlName: String = c.fieldFormatter.formatField(fieldName)
         override val name: String    = fieldName
         override val codec: Codec[H] = hMeta.value.codec
       }.opt
@@ -274,14 +277,15 @@ object Meta {
       lMeta: Lazy[MetaS[L]],
       fPrepend: Prepend.Aux[BF, FieldType[K, MetaField[L]] :: HNil, AF],
       mfPrepend: Prepend.Aux[BMF, MetaField[L] :: HNil, AMF],
-      efPrepend: Prepend.Aux[BEF, ExtractedField[L] :: HNil, AEF]
+      efPrepend: Prepend.Aux[BEF, ExtractedField[L] :: HNil, AEF],
+      c: Configuration
     ): Meta0.Aux[A, BM ~ L, AF, AMF, AEF] = {
       val fieldName: String = w.value.name
 
       // Simple type
       val metaField =
         new MetaField[L] {
-          override def sqlName: String = fieldName
+          override def sqlName: String = c.fieldFormatter.formatField(fieldName)
 
           override def name: String = fieldName
 
@@ -321,14 +325,15 @@ object Meta {
       lMeta: Lazy[MetaS[L]],
       fPrepend: Prepend.Aux[BF, FieldType[K, OptionalMetaField[L]] :: HNil, AF],
       mfPrepend: Prepend.Aux[BMF, OptionalMetaField[L] :: HNil, AMF],
-      efPrepend: Prepend.Aux[BEF, ExtractedOptionalField[L] :: HNil, AEF]
+      efPrepend: Prepend.Aux[BEF, ExtractedOptionalField[L] :: HNil, AEF],
+      c: Configuration
     ): Meta0.Aux[A, BM ~ Option[L], AF, AMF, AEF] = {
       val fieldName: String = w.value.name
 
       // Simple type
       val metaField: OptionalMetaField[L] =
         new MetaField[L] {
-          override def sqlName: String = fieldName
+          override def sqlName: String = c.fieldFormatter.formatField(fieldName)
 
           override def name: String = fieldName
 
