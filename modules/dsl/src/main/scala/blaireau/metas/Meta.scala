@@ -79,6 +79,32 @@ object Meta {
 
   def of[T](c: Codec[T]): MetaS[T] = Meta[T, HNil, HNil, HNil](c, HNil, HNil)(_ => HNil)
 
+  @nowarn("cat=unused")
+  implicit final def genericMetaEncoder[A, T, CT, F <: HList, MF <: HList, EF <: HList](implicit
+    generic: LabelledGeneric.Aux[A, T],
+    meta0: Lazy[Meta0.Aux[T, CT, F, MF, EF]],
+    tw: Twiddler.Aux[A, CT]
+  ): Meta.Aux[A, F, MF, EF] =
+    meta0.value.meta.gmap
+
+  def apply[T, F0 <: HList, MF0 <: HList, EF0 <: HList](
+    _codec: Codec[T],
+    _fields: F0,
+    _metaFields: MF0
+  )(
+    _extract: T => EF0
+  ): Meta.Aux[T, F0, MF0, EF0] = new Meta[T] {
+    override final type F  = F0
+    override final type MF = MF0
+    override final type EF = EF0
+
+    override final val codec: Codec[T]                  = _codec
+    private[blaireau] override final val fields: F      = _fields
+    private[blaireau] override final val metaFields: MF = _metaFields
+
+    private[blaireau] override final def extract(t: T): EF0 = _extract(t)
+  }
+
   object Meta0 {
     type Aux[T, MT, F <: HList, MF <: HList, EF <: HList] = Meta0[T] {
       type MetaT  = MT
@@ -104,7 +130,7 @@ object Meta {
           Meta(codec, fields, metaFields)(extract)
       }
 
-    @nowarn
+    @nowarn("cat=unused")
     implicit def baseField[K <: Symbol, H](implicit
       w: Witness.Aux[K],
       hMeta: Lazy[MetaS[H]],
@@ -167,7 +193,7 @@ object Meta {
       )(h => (metaField -> h) :: HNil)
     }
 
-    @nowarn
+    @nowarn("cat=unused")
     implicit def baseMeta[K <: Symbol, H, HF <: HList, HMF <: HList, HEF <: HList](implicit
       w: Witness.Aux[K],
       hMeta: Lazy[Meta.Aux[H, HF, HMF, HEF]],
@@ -189,7 +215,7 @@ object Meta {
       )(h => (meta -> h) :: HNil)
     }
 
-    @nowarn
+    @nowarn("cat=unused")
     implicit def baseOptionalMeta[
       K <: Symbol,
       H,
@@ -223,7 +249,7 @@ object Meta {
       )(h => (optionMeta -> h) :: HNil)
     }
 
-    @nowarn
+    @nowarn("cat=unused")
     implicit def hlistField[
       A <: HList,   // The object Generic Representation
       AF <: HList,  // Fields of the object
@@ -271,7 +297,7 @@ object Meta {
       }
     }
 
-    @nowarn
+    @nowarn("cat=unused")
     implicit def hlistOptionalField[
       A <: HList,   // The object Generic Representation
       AF <: HList,  // Fields of the object
@@ -318,7 +344,7 @@ object Meta {
       }
     }
 
-    @nowarn
+    @nowarn("cat=unused")
     implicit def hlistMeta[
       A <: HList,   // The object Generic Representation
       AF <: HList,  // Fields of the object
@@ -362,7 +388,7 @@ object Meta {
       }
     }
 
-    @nowarn
+    @nowarn("cat=unused")
     implicit def hlistOptionalMeta[
       A <: HList,    // The object Generic Representation
       AF <: HList,   // Fields of the object
@@ -406,31 +432,5 @@ object Meta {
       }
     }
   }
-
-  def apply[T, F0 <: HList, MF0 <: HList, EF0 <: HList](
-    _codec: Codec[T],
-    _fields: F0,
-    _metaFields: MF0
-  )(
-    _extract: T => EF0
-  ): Meta.Aux[T, F0, MF0, EF0] = new Meta[T] {
-    override final type F  = F0
-    override final type MF = MF0
-    override final type EF = EF0
-
-    override final val codec: Codec[T]                  = _codec
-    private[blaireau] override final val fields: F      = _fields
-    private[blaireau] override final val metaFields: MF = _metaFields
-
-    private[blaireau] override final def extract(t: T): EF0 = _extract(t)
-  }
-
-  @nowarn
-  implicit final def genericMetaEncoder[A, T, CT, F <: HList, MF <: HList, EF <: HList](implicit
-    generic: LabelledGeneric.Aux[A, T],
-    meta0: Lazy[Meta0.Aux[T, CT, F, MF, EF]],
-    tw: Twiddler.Aux[A, CT]
-  ): Meta.Aux[A, F, MF, EF] =
-    meta0.value.meta.gmap
 
 }

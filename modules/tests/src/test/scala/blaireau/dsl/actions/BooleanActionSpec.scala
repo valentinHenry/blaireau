@@ -6,21 +6,28 @@
 package blaireau.dsl.actions
 
 import blaireau.dsl._
-import blaireau.dsl.filtering.{BooleanAction, IdBooleanAction}
+import blaireau.dsl.filtering.BooleanAction
 import blaireau.metas.Meta
 import munit.FunSuite
 import shapeless.the
+import skunk.implicits.toIdOps
 import skunk.{Codec, ~}
 
 class BooleanActionSpec extends FunSuite {
   case class Points(yes: Long, no: Int)
+
   val pointCodec: Codec[Points] = (int8 ~ int4).gimap[Points]
 
-  case class Something(well: Float)
-  val somethingCodec: Codec[Something] = float4.gimap[Something]
+  case class Maybe(ok: Int, oui: Option[Long])
 
-  case class Blaireau(name: String, something: Option[Something], age: Int, points: Points, maybe: Option[String])
-  val blaireauCodec: Codec[Blaireau] = (text ~ somethingCodec.opt ~ int4 ~ pointCodec ~ text.opt).gimap[Blaireau]
+  val maybeCodec                     = (int4 ~ int8.opt).gimap[Maybe]
+  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec ~ text.opt ~ maybeCodec.opt ~ bool).gimap[Blaireau]
+
+  private[this] def assert[A](assign: BooleanAction[A], dummy: A, sql: String, codec: Codec[A]): Unit = {
+    assertEquals(assign.toFragment.sql, sql)
+    assertEquals(assign.elt, dummy)
+    assertEquals(assign.codec.toString(), codec.toString())
+  }
 
   val meta = the[Meta[Blaireau]]
 
@@ -61,31 +68,70 @@ class BooleanActionSpec extends FunSuite {
   }
 
   test("single option isEmpty") {
-    assert(meta.maybe.isEmpty, skunk.Void, "maybe IS NULL", skunk.Void.codec)
+    assert(meta.something.isEmpty, skunk.Void, "something IS NULL", skunk.Void.codec)
   }
 
   test("single option isDefined") {
-    assert(meta.maybe.isDefined, skunk.Void, "maybe IS NOT NULL", skunk.Void.codec)
+    assert(meta.something.isDefined, skunk.Void, "something IS NOT NULL", skunk.Void.codec)
   }
 
   test("single option exists") {
-    assert(meta.maybe.exists(_ === "hmmm"), "hmmm", "(maybe IS NOT NULL AND maybe = $1)", text)
+    assert(meta.something.exists(_ === "hmmm"), "hmmm", "(something IS NOT NULL AND something = $1)", text)
+  }
+
+  test("single option exists with boolean") {
+    assert(
+      meta.something.exists(_ === "hmmm" && meta.check),
+      "hmmm" ~ skunk.Void,
+      "(something IS NOT NULL AND (something = $1 AND check))",
+      text ~ skunk.Void.codec
+    )
   }
 
   test("single option forall") {
-    assert(meta.maybe.forall(_ <> "ok"), "ok", "(maybe IS NULL OR maybe <> $1)", text)
+    assert(meta.something.forall(_ <> "ok"), "ok", "(something IS NULL OR something <> $1)", text)
   }
 
-//  test("embedded option isEmpty") {
-//    assert(meta.something.isEmpty, skunk.Void, "well IS NULL", skunk.Void.codec)
-//  }
-//
-//  test("embedded option isDefined") {
-//    assert(meta.something.isDefined, skunk.Void, "well IS NOT NULL", skunk.Void.codec)
-//  }
-
   test("single option contains") {
-    assert(meta.maybe.contains("Test"), "Test", "(maybe IS NOT NULL AND maybe = $1)", text.opt)
+    assert(meta.something.contains("ok"), "ok", "something = $1", text)
+  }
+
+  test("embedded option isEmpty") {
+    assert(meta.maybe.isEmpty, skunk.Void, "(NOT (ok IS NOT NULL OR oui IS NOT NULL))", skunk.Void.codec)
+  }
+
+  test("embedded option isDefined") {
+    assert(meta.maybe.isDefined, skunk.Void, "(ok IS NOT NULL OR oui IS NOT NULL)", skunk.Void.codec)
+  }
+
+  test("embedded option exists") {
+    val dummy: Maybe = Maybe(1, None)
+    assert(
+      meta.maybe.exists(_ === dummy),
+      dummy,
+      "((ok IS NOT NULL OR oui IS NOT NULL) AND (ok = $1 AND oui = $2))",
+      maybeCodec
+    )
+  }
+
+  test("embedded option forall") {
+    val dummy: Maybe = Maybe(1, None)
+    assert(
+      meta.maybe.forall(_ <> dummy),
+      dummy,
+      "((NOT (ok IS NOT NULL OR oui IS NOT NULL)) OR (ok <> $1 OR oui <> $2))",
+      maybeCodec
+    )
+  }
+
+  test("embedded option contains") {
+    val dummy: Maybe = Maybe(1, None)
+    assert(meta.maybe.contains(dummy), dummy, "(ok = $1 AND oui = $2)", maybeCodec)
+  }
+
+  test("embedded option equal") {
+    val dummy: Option[Maybe] = Some(Maybe(1, None))
+    assert(meta.maybe === dummy, dummy, "(ok = $1 AND oui = $2)", maybeCodec.opt)
   }
 
   test("two operators &&") {
@@ -97,7 +143,7 @@ class BooleanActionSpec extends FunSuite {
   }
 
   test("multiple operators parens") {
-    val action: IdBooleanAction[String ~ Int ~ String] = (meta.name === "test" || meta.age <= 5) && meta.name =!= "tset"
+    val action: BooleanAction[String ~ Int ~ String] = (meta.name === "test" || meta.age <= 5) && meta.name =!= "tset"
 
     assert(
       action,
@@ -160,9 +206,12 @@ class BooleanActionSpec extends FunSuite {
     )
   }
 
-  private[this] def assert[CA, A](assign: BooleanAction[CA, A], dummy: A, sql: String, codec: Codec[CA]): Unit = {
-    assertEquals(assign.toFragment.sql, sql)
-    assertEquals(assign.elt, dummy)
-    assertEquals(assign.codec.toString(), codec.toString())
-  }
+  case class Blaireau(
+    name: String,
+    age: Int,
+    points: Points,
+    something: Option[String],
+    maybe: Option[Maybe],
+    check: Boolean
+  )
 }

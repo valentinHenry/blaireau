@@ -8,19 +8,18 @@ package blaireau.dsl.actions
 import blaireau.utils.FragmentUtils
 import skunk.{Codec, Fragment}
 
-trait Action[C, A] { self =>
-  def codec: Codec[C]
+trait Action[A] {
+  self =>
+  def codec: Codec[A]
+
   def elt: A
 
-  def to(a: A): C
-
-  def toFragment: Fragment[C]
+  def toFragment: Fragment[A]
 }
 
 object Action {
-  abstract class Op[A](op: String, fieldName: String) extends Action[A, A] {
+  abstract class Op[A](op: String, fieldName: String) extends Action[A] {
     override def toFragment: Fragment[A] = FragmentUtils.withValue(s"$fieldName $op ", codec)
-    override def to(a: A): A             = a
   }
 }
 

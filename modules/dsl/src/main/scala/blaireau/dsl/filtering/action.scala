@@ -6,72 +6,65 @@
 package blaireau.dsl.filtering
 
 import blaireau.dsl.actions.{Action, IMapper}
-import blaireau.dsl.filtering
-import blaireau.metas.{ExtractedField, ExtractedMeta, Meta, MetaUtils}
+import blaireau.metas.{Meta, MetaUtils}
 import blaireau.utils.FragmentUtils
+import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}
-import shapeless.{HList, Poly1, Poly2}
 import skunk.implicits.{toIdOps, toStringOps}
 import skunk.util.Twiddler
 import skunk.{Codec, Fragment, Void, ~}
 
-sealed trait BooleanAction[AC, A] extends Action[AC, A] with Product with Serializable { self =>
-  def &&[BC, B](right: BooleanAction[BC, B]): BooleanAction[AC ~ BC, A ~ B] =
-    filtering.ForgedBoolean(
-      self.codec ~ right.codec,
-      (self.elt, right.elt),
-      sql"(${self.toFragment} AND ${right.toFragment})",
-      ab => self.to(ab._1) ~ right.to(ab._2)
-    )
-
-  def ||[BC, B](right: BooleanAction[BC, B]): BooleanAction[AC ~ BC, A ~ B] =
-    filtering.ForgedBoolean(
+sealed trait BooleanAction[A] extends Action[A] with Product with Serializable {
+  self =>
+  def &&[B](right: BooleanAction[B]): BooleanAction[A ~ B] =
+    ForgedBoolean(
       self.codec ~ right.codec,
       self.elt ~ right.elt,
-      sql"(${self.toFragment} OR ${right.toFragment})",
-      ab => self.to(ab._1) ~ right.to(ab._2)
+      sql"(${self.toFragment} AND ${right.toFragment})"
     )
+
+  def ||[B](right: BooleanAction[B]): BooleanAction[A ~ B] =
+    ForgedBoolean(
+      self.codec ~ right.codec,
+      self.elt ~ right.elt,
+      sql"(${self.toFragment} OR ${right.toFragment})"
+    )
+
+  def unary_! : BooleanAction[A] = ForgedBoolean(
+    self.codec,
+    self.elt,
+    sql"(NOT ${self.toFragment})"
+  )
 }
 
-private[blaireau] final case class ForgedBoolean[C, A](
-  codec: Codec[C],
+private[blaireau] final case class ForgedBoolean[A](
+  codec: Codec[A],
   elt: A,
-  fragment: Fragment[C],
-  to0: A => C
-) extends BooleanAction[C, A] {
-  override def toFragment: Fragment[C] = fragment
-  override def to(a: A): C             = to0(a)
+  fragment: Fragment[A]
+) extends BooleanAction[A] {
+  override def toFragment: Fragment[A] = fragment
 }
 
 object BooleanAction {
-  implicit def imapper: IMapper[IdBooleanAction] = new IMapper[IdBooleanAction] {
-    override def imap[A, B](m: IdBooleanAction[A])(f: A => B)(g: B => A): IdBooleanAction[B] =
-      BooleanAction.imap(m)(f)(f)(g)(identity)
+  implicit def imapper: IMapper[BooleanAction] = new IMapper[BooleanAction] {
+    override def imap[A, B](m: BooleanAction[A])(f: A => B)(g: B => A): BooleanAction[B] =
+      BooleanAction.imap(m)(f)(g)
   }
 
-  def imap[AC, A, BC, B](
-    m: BooleanAction[AC, A]
-  )(f: A => B)(fc: AC => BC)(gc: BC => AC)(toC: B => BC): BooleanAction[BC, B] =
-    ForgedBoolean(
-      m.codec.imap(fc)(gc),
-      f(m.elt),
-      m.toFragment.contramap(gc),
-      toC
-    )
-
-  trait VoidBooleanAction extends IdBooleanAction[Void] {
-    final override def to(a: Void): Void  = a
-    final override val codec: Codec[Void] = Void.codec
-
-    final override def elt: Void = Void
-  }
-
-  def empty: IdBooleanAction[Void] = ForgedBoolean(
+  def empty: BooleanAction[Void] = ForgedBoolean(
     Void.codec,
     Void,
-    sql"TRUE",
-    identity
+    sql"TRUE"
   )
+
+  def imap[A, B](
+    m: BooleanAction[A]
+  )(f: A => B)(g: B => A): BooleanAction[B] =
+    ForgedBoolean(
+      m.codec.imap(f)(g),
+      f(m.elt),
+      m.toFragment.contramap(g)
+    )
 
   private[blaireau] def booleanEqAnd[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
     meta: Meta.Aux[A, F, MF, EF],
@@ -79,10 +72,10 @@ object BooleanAction {
   )(implicit
     mapper: Mapper.Aux[booleanEqAndApplier.type, EF, MO],
     r: LeftReducer.Aux[MO, actionBooleanAndFolder.type, FO],
-    ev: FO =:= IdBooleanAction[CO],
+    ev: FO =:= BooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): IdBooleanAction[A] =
-    MetaUtils.applyExtract[booleanEqAndApplier.type, actionBooleanAndFolder.type, A, EF, MO, FO, CO, IdBooleanAction](
+  ): BooleanAction[A] =
+    MetaUtils.applyExtract[booleanEqAndApplier.type, actionBooleanAndFolder.type, A, EF, MO, FO, CO, BooleanAction](
       elt,
       meta.extract
     )
@@ -93,10 +86,10 @@ object BooleanAction {
   )(implicit
     mapper: Mapper.Aux[booleanEqOrApplier.type, EF, MO],
     r: LeftReducer.Aux[MO, actionBooleanOrFolder.type, FO],
-    ev: FO =:= IdBooleanAction[CO],
+    ev: FO =:= BooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): IdBooleanAction[A] =
-    MetaUtils.applyExtract[booleanEqOrApplier.type, actionBooleanOrFolder.type, A, EF, MO, FO, CO, IdBooleanAction](
+  ): BooleanAction[A] =
+    MetaUtils.applyExtract[booleanEqOrApplier.type, actionBooleanOrFolder.type, A, EF, MO, FO, CO, BooleanAction](
       elt,
       meta.extract
     )
@@ -107,10 +100,10 @@ object BooleanAction {
   )(implicit
     mapper: Mapper.Aux[booleanNEqAndApplier.type, EF, MO],
     r: LeftReducer.Aux[MO, actionBooleanAndFolder.type, FO],
-    ev: FO =:= IdBooleanAction[CO],
+    ev: FO =:= BooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): IdBooleanAction[A] =
-    MetaUtils.applyExtract[booleanNEqAndApplier.type, actionBooleanAndFolder.type, A, EF, MO, FO, CO, IdBooleanAction](
+  ): BooleanAction[A] =
+    MetaUtils.applyExtract[booleanNEqAndApplier.type, actionBooleanAndFolder.type, A, EF, MO, FO, CO, BooleanAction](
       elt,
       meta.extract
     )
@@ -121,41 +114,47 @@ object BooleanAction {
   )(implicit
     mapper: Mapper.Aux[booleanNEqOrApplier.type, EF, MO],
     r: LeftReducer.Aux[MO, actionBooleanOrFolder.type, FO],
-    ev: FO =:= IdBooleanAction[CO],
+    ev: FO =:= BooleanAction[CO],
     tw: Twiddler.Aux[A, CO]
-  ): IdBooleanAction[A] =
-    MetaUtils.applyExtract[booleanNEqOrApplier.type, actionBooleanOrFolder.type, A, EF, MO, FO, CO, IdBooleanAction](
+  ): BooleanAction[A] =
+    MetaUtils.applyExtract[booleanNEqOrApplier.type, actionBooleanOrFolder.type, A, EF, MO, FO, CO, BooleanAction](
       elt,
       meta.extract
     )
 
+  trait VoidBooleanAction extends BooleanAction[Void] {
+    final override val codec: Codec[Void] = Void.codec
+
+    final override def elt: Void = Void
+  }
+
   final case class BooleanEq[A](sqlField: String, codec: Codec[A], elt: A)
     extends Action.Op[A]("=", sqlField)
-    with IdBooleanAction[A]
+    with BooleanAction[A]
 
   final case class BooleanLike[A](sqlField: String, codec: Codec[A], elt: A)
     extends Action.Op[A]("like", sqlField)
-    with IdBooleanAction[A]
+    with BooleanAction[A]
 
   final case class BooleanNEq[A](sqlField: String, codec: Codec[A], elt: A)
     extends Action.Op[A]("<>", sqlField)
-    with IdBooleanAction[A]
+    with BooleanAction[A]
 
   final case class BooleanGt[A](sqlField: String, codec: Codec[A], elt: A)
     extends Action.Op[A](">", sqlField)
-    with IdBooleanAction[A]
+    with BooleanAction[A]
 
   final case class BooleanGtEq[A](sqlField: String, codec: Codec[A], elt: A)
     extends Action.Op[A](">=", sqlField)
-    with IdBooleanAction[A]
+    with BooleanAction[A]
 
   final case class BooleanLt[A](sqlField: String, codec: Codec[A], elt: A)
     extends Action.Op[A]("<", sqlField)
-    with IdBooleanAction[A]
+    with BooleanAction[A]
 
   final case class BooleanLtEq[A](sqlField: String, codec: Codec[A], elt: A)
     extends Action.Op[A]("<=", sqlField)
-    with IdBooleanAction[A]
+    with BooleanAction[A]
 
   final case class BooleanOptionIsEmpty(sqlField: String) extends VoidBooleanAction {
     override def toFragment: Fragment[Void] = FragmentUtils.const(s"$sqlField IS NULL")
@@ -165,77 +164,5 @@ object BooleanAction {
     override def toFragment: Fragment[Void] = FragmentUtils.const(s"$sqlField IS NOT NULL")
   }
 
-  final case class BooleanOptionContains[A](sqlField: String, codec: Codec[Option[A]], elt: A)
-    extends BooleanAction[Option[A], A] {
-    override def to(a: A): Option[A] = Some(a)
-    override def toFragment: Fragment[Option[A]] = {
-      val notEmpty: Fragment[Void] = BooleanOptionIsDefined(sqlField).toFragment
-      val eq: Fragment[Option[A]]  = BooleanEq(sqlField, codec, Some(elt)).toFragment
-      sql"($notEmpty AND $eq)"
-    }
-  }
-
   final case class BooleanOptionExists[A](sqlField: String, codec: Codec[Option[A]], elt: A)
-}
-
-class BooleanEqApplier extends Poly1 with MetaFieldBooleanSyntax {
-  implicit def field[A]: Case.Aux[ExtractedField[A], IdBooleanAction[A]] = at { case (field, elt) => field === elt }
-}
-
-object booleanEqAndApplier extends BooleanEqApplier {
-  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
-    mapper: Mapper.Aux[this.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionBooleanAndFolder.type, FO],
-    ev: FO =:= IdBooleanAction[CO],
-    tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF], IdBooleanAction[A]] = at { case (field, elt) =>
-    BooleanAction.booleanEqAnd(field, elt)
-  }
-}
-
-object booleanEqOrApplier extends BooleanEqApplier {
-  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
-    mapper: Mapper.Aux[this.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionBooleanOrFolder.type, FO],
-    ev: FO =:= IdBooleanAction[CO],
-    tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF], IdBooleanAction[A]] = at { case (field, elt) =>
-    BooleanAction.booleanEqOr(field, elt)
-  }
-}
-
-class BooleanNEqApplier extends Poly1 with MetaFieldBooleanSyntax {
-  implicit def field[A]: Case.Aux[ExtractedField[A], IdBooleanAction[A]] = at { case (field, elt) => field <> elt }
-}
-
-object booleanNEqAndApplier extends BooleanNEqApplier {
-  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
-    mapper: Mapper.Aux[this.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionBooleanAndFolder.type, FO],
-    ev: FO =:= IdBooleanAction[CO],
-    tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF], IdBooleanAction[A]] = at { case (meta, elt) =>
-    BooleanAction.booleanNEqAnd(meta, elt)
-  }
-}
-
-object booleanNEqOrApplier extends BooleanNEqApplier {
-  implicit def meta[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](implicit
-    mapper: Mapper.Aux[this.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionBooleanOrFolder.type, FO],
-    ev: FO =:= IdBooleanAction[CO],
-    tw: Twiddler.Aux[A, CO]
-  ): Case.Aux[ExtractedMeta[A, F, MF, EF], IdBooleanAction[A]] = at { case (meta, elt) =>
-    BooleanAction.booleanNEqOr(meta, elt)
-  }
-}
-
-object actionBooleanAndFolder extends Poly2 {
-  implicit def folder[A, B]: Case.Aux[IdBooleanAction[A], IdBooleanAction[B], IdBooleanAction[A ~ B]] =
-    at(_ && _)
-}
-
-object actionBooleanOrFolder extends Poly2 {
-  implicit def folder[A, B]: Case.Aux[IdBooleanAction[A], IdBooleanAction[B], IdBooleanAction[A ~ B]] =
-    at(_ || _)
 }

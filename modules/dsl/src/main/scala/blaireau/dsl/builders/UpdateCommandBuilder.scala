@@ -15,25 +15,25 @@ import skunk.data.Completion
 import skunk.implicits.toStringOps
 import skunk.{Command, Session, ~}
 
-final class UpdateCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, U, WC, W](
+final class UpdateCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, U, W](
   tableName: String,
   private[blaireau] val meta: Meta.Aux[T, F, MF, EF],
   updatedFields: AssignmentAction[U],
-  private[blaireau] val where: BooleanAction[WC, W]
-) extends WhereBuilder[T, F, MF, EF, WC, W] {
+  private[blaireau] val where: BooleanAction[W]
+) extends WhereBuilder[T, F, MF, EF, W] {
 
-  override type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, WC0, W0] =
-    UpdateCommandBuilder[T0, F0, MF0, EF0, U, WC0, W0]
+  override type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, W0] =
+    UpdateCommandBuilder[T0, F0, MF0, EF0, U, W0]
 
-  override def withWhere[NWC, NW](
-    newWhere: BooleanAction[NWC, NW]
-  ): UpdateCommandBuilder[T, F, MF, EF, U, NWC, NW] =
-    new UpdateCommandBuilder[T, F, MF, EF, U, NWC, NW](tableName, meta, updatedFields, newWhere)
+  override def withWhere[NW](
+    newWhere: BooleanAction[NW]
+  ): UpdateCommandBuilder[T, F, MF, EF, U, NW] =
+    new UpdateCommandBuilder[T, F, MF, EF, U, NW](tableName, meta, updatedFields, newWhere)
 
   def toCommand: Command[U ~ W] = {
     val updateFragment     = FragmentUtils.const(s"UPDATE TABLE $tableName")
     val assignmentFragment = updatedFields.toFragment
-    val whereFragment      = where.toFragment.contramap(where.to)
+    val whereFragment      = where.toFragment
     sql"$updateFragment SET $assignmentFragment WHERE $whereFragment".command
   }
 

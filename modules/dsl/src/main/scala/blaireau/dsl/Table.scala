@@ -18,7 +18,7 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
   tableName: String,
   val meta: Meta.Aux[T, F, MF, EF]
 ) {
-  type SelectQuery[S <: HList, SC] = SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void, skunk.Void]
+  type SelectQuery[S <: HList, SC] = SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void]
 
   private[this] def select[SMF <: HList, SC](selects: SMF, selectCodec: Codec[SC])(implicit
     toList: ToList[SMF, MetaField[_]]
@@ -35,7 +35,7 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
     toList: ToList[MF, MetaField[_]]
   ): SelectQuery[MF, T] = select(meta.metaFields, meta.codec)
 
-  type UpdateCommand[U] = UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void, skunk.Void]
+  type UpdateCommand[U] = UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void]
 
   def select[SMF <: HList, SC](s: Meta.Aux[T, F, MF, EF] => FieldProduct.Aux[SC, SMF])(implicit
     toList: ToList[SMF, MetaField[_]]
@@ -58,8 +58,8 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
   def update[U](u: Meta.Aux[T, F, MF, EF] => AssignmentAction[U]): UpdateCommand[U] =
     update(u(meta))
 
-  def delete: DeleteCommandBuilder[T, F, MF, EF, skunk.Void, skunk.Void] =
-    new DeleteCommandBuilder[T, F, MF, EF, skunk.Void, skunk.Void](tableName, meta, BooleanAction.empty)
+  def delete: DeleteCommandBuilder[T, F, MF, EF, skunk.Void] =
+    new DeleteCommandBuilder[T, F, MF, EF, skunk.Void](tableName, meta, BooleanAction.empty)
 
   type InsertCommand[I] = InsertCommandBuilder[I, InsertCommandBuilder.Ev.Empty]
 

@@ -11,15 +11,14 @@ import blaireau.utils.FragmentUtils
 import skunk.implicits.toStringOps
 import skunk.{Codec, Fragment, Void, ~}
 
-sealed trait AssignmentAction[A] extends Action[A, A] with Product with Serializable { self =>
+sealed trait AssignmentAction[A] extends Action[A] with Product with Serializable {
+  self =>
   def <+>[B](right: AssignmentAction[B]): AssignmentAction[A ~ B] =
     assignment.ForgedAssignment(
       self.codec ~ right.codec,
       (self.elt, right.elt),
       sql"${self.toFragment}, ${right.toFragment}"
     )
-
-  override def to(a: A): A = a
 }
 
 private final case class ForgedAssignment[A](codec: Codec[A], elt: A, fragment: Fragment[A])

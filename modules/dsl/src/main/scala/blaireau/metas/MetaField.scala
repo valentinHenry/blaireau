@@ -1,10 +1,16 @@
+// Written by Valentin "Firiath" Henry
+//
+// This software is licensed under the MIT License (MIT).
+// For more information see LICENSE or https://opensource.org/licenses/MIT
+
 package blaireau.metas
 
 import shapeless.{::, HNil}
 import skunk.Codec
 
 // Representation of a db column.
-trait MetaField[H] extends FieldProduct { self =>
+trait MetaField[H] extends FieldProduct {
+  self =>
   override type MF = MetaField[H] :: HNil
   override type T  = H
 

@@ -96,7 +96,7 @@ object OptionalMeta {
     override private[blaireau] def extract(t: T): EF = _extract(t)
   }
 
-  @nowarn
+  @nowarn("cat=unused")
   implicit final def genericMetaEncoder[
     A,
     H <: HList,
