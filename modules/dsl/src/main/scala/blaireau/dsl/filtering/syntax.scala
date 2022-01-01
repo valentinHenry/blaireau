@@ -39,17 +39,20 @@ trait MetaFieldBooleanSyntax {
   implicit final def optionMetaFieldSyntax[T](f: OptionalMetaField[T]): OptionMetaFieldOp[T] =
     new OptionMetaFieldOp[T](f)
 
-  implicit final def metaFieldSyntax[T](f: MetaField[T]): MetaFieldOps[T] =
-    new MetaFieldOps[T](f)
+  implicit final def metaFieldSyntax[T](f: MetaField[T]): EqualityFieldOps[T] =
+    new EqualityFieldOps[T](f)
 
-  implicit final def numericFieldSyntax[T](f: MetaField[T])(implicit @unused ev: Numeric[T]): NumericFieldOps[T] =
-    new NumericFieldOps[T](f)
+  implicit final def numericFieldSyntax[T](f: MetaField[T])(implicit @unused ev: Numeric[T]): ComparableFieldOps[T] =
+    new ComparableFieldOps[T](f)
 
   implicit final def stringFieldSyntax(f: MetaField[String]): StringFieldOps[String] =
     new StringFieldOps[String](f)
 
   implicit final def booleanFieldSyntax(f: MetaField[Boolean]): BooleanFieldOps[Boolean] =
     new BooleanFieldOps[Boolean](f)
+
+  implicit final def temporalFieldSyntax[T](f: MetaField[T])(implicit @unused ev: Temporal[T]): ComparableFieldOps[T] =
+    new ComparableFieldOps[T](f)
 
   implicit def asBooleanAction(f: MetaField[Boolean]): BooleanAction[Void] = f.asBool
 }
@@ -92,7 +95,7 @@ object MetaFieldOps {
       BooleanAction.booleanNEqOr(meta, right)
   }
 
-  class MetaFieldOps[T](f: MetaField[T]) {
+  class EqualityFieldOps[T](f: MetaField[T]) {
     def ===(right: T): BooleanEq[T] =
       BooleanEq(f.sqlName, f.codec, right)
 
@@ -106,7 +109,7 @@ object MetaFieldOps {
       BooleanNEq(f.sqlName, f.codec, right)
   }
 
-  class NumericFieldOps[T](f: MetaField[T]) {
+  class ComparableFieldOps[T](f: MetaField[T]) {
     def >=(right: T): BooleanGtEq[T] =
       BooleanGtEq(f.sqlName, f.codec, right)
 
