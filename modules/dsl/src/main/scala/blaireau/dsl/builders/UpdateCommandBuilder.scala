@@ -31,7 +31,7 @@ final class UpdateCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, U, W](
     new UpdateCommandBuilder[T, F, MF, EF, U, NW](tableName, meta, updatedFields, newWhere)
 
   def toCommand: Command[U ~ W] = {
-    val updateFragment     = FragmentUtils.const(s"UPDATE TABLE $tableName")
+    val updateFragment     = FragmentUtils.const(s"UPDATE $tableName")
     val assignmentFragment = updatedFields.toFragment
     val whereFragment      = where.toFragment
     sql"$updateFragment SET $assignmentFragment WHERE $whereFragment".command

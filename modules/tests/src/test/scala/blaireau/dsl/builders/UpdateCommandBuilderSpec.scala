@@ -19,7 +19,7 @@ class UpdateCommandBuilderSpec extends FunSuite {
     val command: Command[Blaireau ~ String] = c.toCommand
 
     assertEquals(c.commandIn, (dummy, "Robert"))
-    assertEquals(command.sql, "UPDATE TABLE blaireaux SET name = $1, age = $2 WHERE name = $3")
+    assertEquals(command.sql, "UPDATE blaireaux SET name = $1, age = $2 WHERE name = $3")
   }
 
   test("update one field") {
@@ -27,6 +27,6 @@ class UpdateCommandBuilderSpec extends FunSuite {
     val command: Command[Int ~ String] = c.toCommand
 
     assertEquals(c.commandIn, (5, "Robert"))
-    assertEquals(command.sql, "UPDATE TABLE blaireaux SET age = $1 WHERE name = $2")
+    assertEquals(command.sql, "UPDATE blaireaux SET age = $1 WHERE name = $2")
   }
 }
