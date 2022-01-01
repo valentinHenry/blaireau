@@ -11,22 +11,25 @@ If this project interests you, feel free to drop a :star: to encourage me workin
 
 ## Table of Content
 - [Quickstart with sbt](#quickstart-with-sbt)
-- [SQL DSL](#sql-dsl)
-    * [Metas](#metas)
-    * [Table](#table)
+- [Metas](#metas)
+- [Configuration](#configuration)
+    * [Field formatter](#field-formatter)
+    * [String Codec](#string-codec)
+    * [Default Json Type](#default-json-type)
+    * [Using the configuration](#using-the-configuration)
+- [Table](#table)
+- [Field selection](#field-selection)
+- [Filtering](#filtering)
+- [Queries and Commands builders](#queries-and-commands-builders)
     * [Select](#select)
-        + [Select DSL](#select-dsl)
-        + [Where DSL](#where-dsl)
+        + [Where](#where)
         + [Querying](#querying)
-        + [Example](#example-1)
+        + [Example](#example)
     * [Update](#update)
-        + [Update DSL](#update-dsl)
         + [Commands](#commands)
     * [Delete](#delete)
-        + [Delete DSL](#delete-dsl)
         + [Commands](#commands-1)
     * [Insert](#insert)
-        + [Insert DSL](#insert-dsl)
         + [Commands](#commands-2)
 
 
@@ -47,84 +50,80 @@ libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
 libraryDependencies += "fr.valentinhenry" %% "blaireau-refined" % Version
 // For Estatico's Newtype Metas
 libraryDependencies += "fr.valentinhenry" %% "blaireau-estatico" % Version
+// For Circe's Json Metas
+libraryDependencies += "fr.valentinhenry" %% "blaireau-circe" % Version
 ```
 
-## Codec derivation
-**Blaireau** provides a generic codec derivation based on shapeless. It derives nested types contained in the codec class.
-
-### Example
-
-```scala
-import blaireau.generic._
-import skunk._
-
-case class Address(street: String, forest: String)
-
-case class Blaireau(name: String, age: Int, address: Address)
-
-val blaireauCodec: Codec[Blaireau] = implicitly
-// eqv to Codec[text ~ int4 ~ (text ~ text)]
-
-val insert: Command[Blaireau] =
-  sql"""
-  INSERT INTO "blaireaux"
-  VALUES($blaireauCodec)
-""".command
-```
-
-:warning: By default, every `String` typed fields will use Skunk's`text` codec in automatic derivation. If another type is
-required, it is preferable to make this codec implicit.
-
-```scala
-import blaireau.generic._
-import skunk._
-
-case class Address(street: String, forest: String)
-implicit val addressCodec: Codec[Address] = (varchar ~ varchar(32)).gimap
-
-case class Blaireau(name: String, age: Int, address: Address)
-
-val blaireauCodec: Codec[Blaireau] = implicitly
-// eqv to Codec[text ~ int4 ~ (varchar ~ varchar(32))]
-
-val insert: Command[Blaireau] =
-  sql"""
-  INSERT INTO "blaireaux"
-  VALUES($blaireauCodec)
-""".command
-```
-
-## SQL DSL
-:warning: This is a work in progress, the DSL is very likely to change
-
-To use the DSL, you must import the package `blaireau.dsl` like below :
-```scala
-import blaireau.dsl._
-```
-
-### Metas
+## Metas
 A meta is a representation of the class in the database. It is derived using Shapeless.
 
 At the moment, only simple types are supported.
 
-A `MetaS[T]` is a meta instance of a type `T`. You can create any `MetaS` you want using the `Meta.of(...)` function.
-It requires only a `skunk.Codec[T]`. 
+A `MetaS[T]` is a meta instance of a type `T`. You can create any `MetaS` you want using the `Meta.of(...)` function. It
+requires only a `skunk.Codec[T]`.
 
 :warning: It sould only be types, not case class or it will mess with the derivation!
 
 Metas must be implicitly available in the scope where the `Table` and `Meta` generation take places.
 
-### Table
+## Configuration
+
+The configuration is used for meta derivation and field formatting.
+
+### Field formatter
+
+In order to translate from the scala camelCase to the one used in postgresql, a field formatter should be given in the
+configuration, currently there are 6 available options:
+
+- camelCase (same as Scala)
+- PascalCase
+- ALLCAPS
+- lowercase
+- snake_case
+- UPPER_SNAKE_CASE
+
+By default, **Blaireau** will use snake_case.
+
+### String Codec
+
+The default string codec is configurable, by default it is set as `text` but it is possible to change it as `varchar`
+or any one required as long as it is a `skunk.Codec[String]`.
+
+This codec is used everywhere there is a String field.
+
+### Default Json Type
+
+When using `blaireau-circe`, an implicit encoder is required for Json objects. The field `jsonTypeAsJsonb` is used to
+chose the format of the Json objects in the DB (json or jsonb).
+
+By default it is set to `jsonb`
+
+### Using the configuration
+
+The default configuration sets the following fields:
+
+- field formatter: camel_case
+- string codec: text
+- default json type: jsonb
+
+In case these configurations are not the one required, an implicit instance of a Configuration must be provided in the
+derivation scope like below:
+
+In the following examples, the default configuration will be used.
+
+## Table
+
 Blaireau maps a case class to a database object. This mapping is done through a Meta-object derivation.
 
 To create a table, you just have to use the `apply` method of the `Table` object like below:
+
 ```scala
 import blaireau.dsl._
 
 import java.util.UUID
 
-final case class Address(street: String, postalCode: String, city: String, country: String)
-final case class User(id: UUID, email: String, firstName: String, lastName: String, age: Int, address: Address)
+final case class Address(street: String, info: Option[String], postalCode: String, city: String, country: String)
+final case class User(id: UUID, email: String, firstName: String, lastName: String, age: Int, address: Option[Address])
 
 val users = Table[User]("users")
 ```
@@ -132,41 +131,47 @@ val users = Table[User]("users")
 We will be using the table above for all following examples.
 
 TODO: override field names
-TODO: change fields names format (camelcase ...)
 
-### Select
-Only simple select queries can be generated using **Blaireau**, for more advance ones, it is better to use **Skunk** sql interpolator.
+## Field selection
 
-#### Select DSL
+This is used in the `select` function from the Select Query Builder and in the `update` function from the Update Command
+Builder.
 
-There are options regarding the selection of fields:
-- Whole object selection
-- Specific fields selection
+The fields are accessed using their scala names (regardless of the format used in the db).
 
-For the whole object selection, the `where` function should not have parameters
+It is possible to select multiple columns using the `~` operator just like in **Tapir**.
+
+Examples:
+
 ```scala
-val users: Query[Void, User] = users.select...
-```
-For a more specific selection of fields, it can be done using the `~` operator like in the **Skunk** library.
-```scala
-import skunk.~
-val namesAndAge: Query[Void, String ~ Int] = users.select(e => e.firstName ~ e.age)...
+table.select(e => e.id)...
+table.update(e => e.email ~ e.lastName)
 ```
 
-Specific selection takes into account the embedded types
+Embedded objects and embedded fields are supported.
+
+Examples:
+
 ```scala
-import skunk.~
-val namesAndAddress: Query[Void, String ~ Address] = users.select(e => e.firstName ~ e.address)...
-// Instead of Query[Void, String ~ String ~ String ~ String ~ String]
+table.update(_.address)
+table.select(e => e.id ~ e.address.country)
 ```
 
-Embedded fields selection is also available:
-```scala
-val cities: Query[Void, String] = users.select(_.address.city)
-```
+## Filtering
 
-#### Where DSL
-A Where clause can be created using boolean operators:
+This is used in the `where`, `whereAnd` and `whereOr` functions of the builders.
+
+Just like the select, the classes fields are accessed using their scala names (regardless of the format used in the db).
+
+All boolean operations and boolean fields can be composed with those operators:
+
+| Type Constraint | Scala |     Postgresql    | Blaireau |
+|:---------------:|:-----:|:-----------------:|:--------:|
+|     Boolean     |  &&   |        AND        |    &&    |
+|     Boolean     |   \|\| |        OR         |   \|\|   |
+|     Boolean     | !     | NOT | ! |
+
+Equality operator are available for all fields
 
 | Type Constraint |   Scala   | Postgresql  | Blaireau  |
 |:---------------:|:---------:|:-----------:|:---------:|
@@ -174,31 +179,6 @@ A Where clause can be created using boolean operators:
 |       Any       |           |             |    =~=    |
 |       Any       |    !=     |     <>      |    <>     |
 |       Any       |           |             |    =!=    |
-|    Numeric \|  String   |      <      |     <     |     <    |
-|    Numeric \|  String   |     <=      |    <=     |    <=    |
-|    Numeric \|  String   |      >      |     >     |     >    |
-|    Numeric \|  String   |     >=      |    >=     |    >=    |
-|     String      |           |    like     |   like    |
-|    Optional     |  isEmpty  |   IS NULL   |  isEmpty  |
-|    Optional     | isDefined | IS NOT NULL | isDefined |
-|    Optional     | contains  |             | contains  |
-|    Optional     |  exists   |             |  exists   |
-|    Optional     |  forall   |             |  forall   |
-
-Those can be combined with operators:
-
-|  Type Constraint  | Scala |     Postgresql    | Blaireau |
-|:-----------------:|:-----:|:-----------------:|:--------:|
-|      Boolean      |   &&  |        AND        |    &&    |
-|      Boolean      |  \|\| |        OR         |   \|\|   |
-
-The classes fields are accessed using their scala names (regardless of the format used in the db).
-
-The `Where` clause can be composed using `whereAnd(...)` and `whereOr(...)` functions after the first `where(...)`.
-
-The operators `===`, `=~=`, `<>` and `=!=` are both compatible with nested objects applying the operator on all fields.
-
-The optional operators are compatible with simple fields and nested objects.
 
 The difference between `<>` and `=!=`: the first one returns true if one of the field is not the same, the later checks
 for a full inequality.
@@ -209,36 +189,140 @@ for full equality.
 Examples:
 
 ```scala
-val findById = users.select.where(_.id === id)...
+// e is considered as the parameter of a where function of a Table[User]
 
-val rueDuChateauAddress = Address("15 Rue du Château", "33000", "Bordeaux", "France")
-val findUsersLivingAtTheAddress = users.select.where(_.address === rueDuChateauAddress)
-// SELECT * FROM users WHERE street = $1 AND postalCode = $2 AND city = $3 AND country = $4
-// $1 = "15 Rue du Château"
-// $2 = "33000"
-// $3 = "Bordeaux"
-// $4 = "France"
+e.email === "patrick@blaireau-corp.com" 
+// email = $1
 
-val findAllOtherUsers = users.select.where(_.address <> rueDuChateauAddress)
-// SELECT * FROM users WHERE street <> $1 OR postalCode <> $2 OR city <> $3 OR country <> $4
-// $1 = ...
+e.firstName <> "Patrick"
+// first_name <> $1
 
-val finaAllUsersNotLivingAnywhereRessemblingTheAddress = users.select.where(_.address =!= rueDuChateauAddress)
-// SELECT * FROM users WHERE street <> $1 AND postalCode <> $2 AND city <> $3 AND country <> $4
-// $1 = ...
+e.address <> someAddress
+// street <> $1 OR info <> $2 OR postal_code <> $3 OR city <> $4 OR country <> $5
 
+e.address =!= someAddress
+// street <> $1 AND info <> $2 AND postal_code <> $3 AND city <> $4 AND country <> $5
 
-val allUsersOver30LivingInParis = users.select.where(e => e.address.city === "Paris" && e.age >= 30)
-// SELECT * FROM users WHERE city = $1 AND age >= $2
-// $1 = "Paris"
-// $2 = 30
+e.address === someAddress
+// street = $1 AND info = $2 AND postal_code = $3 AND city = $4 AND country = $5
+
+e.address =~= someAddress
+// street = $1 OR info = $2 OR postal_code = $3 OR city = $4 OR country = $5
 ```
+
+Comparison operators are available for the Numeric (Int, Float etc.), Strings and Temporal (Dates etc.)
+
+| Type Constraint |   Scala   | Postgresql  | Blaireau  |
+|:---------------:|:---------:|:-----------:|:---------:|
+|    Numeric \| String \|  Temporal   |      <      |     <     |     <    |
+|    Numeric \| String \|  Temporal   |     <=      |    <=     |    <=    |
+|    Numeric \| String \|  Temporal   |      >      |     >     |     >    |
+|    Numeric \| String \|  Temporal   |     >=      |    >=     |    >=    |
+
+Example:
+
+```scala
+e.age < 5
+// age < $1
+```
+
+String fields has the like function which pattern match unsing PostgreSQL syntax
+
+| Type Constraint |   Scala   | Postgresql  | Blaireau  |
+|:---------------:|:---------:|:-----------:|:---------:|
+|     String      |           |    like     |   like    |
+
+Example:
+
+```scala
+e.firstName.like("P%")
+// first_name LIKE $1
+```
+
+Optional fields and objects have their own functions
+
+| Type Constraint |   Scala   | Postgresql  | Blaireau  |
+|:---------------:|:---------:|:-----------:|:---------:|
+|    Optional     |  isEmpty  |   IS NULL   |  isEmpty  |
+|    Optional     | isDefined | IS NOT NULL | isDefined |
+
+Example:
+
+```scala
+e.address.isDefined
+// street IS NOT NULL OR info IS NOT NULL OR postal_code IS NOT NULL OR city IS NOT NULL OR country IS NOT NULL
+```
+
+`isEmpty` is the negation of isDefined.
+
+:warning: Keep in mind that this function is not completely safe since it is looking at fields instead of the mapped
+object itself.
+
+The function below allows you to interact with the object as if it was non-empty just like in scala.
+
+| Type Constraint |   Scala   | Postgresql  | Blaireau  |
+|:---------------:|:---------:|:-----------:|:---------:|
+|    Optional     | contains  |             | contains  |
+|    Optional     |  exists   |             |  exists   |
+|    Optional     |  forall   |             |  forall   |
+
+Example:
+
+```scala
+//val dummyAddress: Address = ???
+
+e.address.contains(dummyAddress)
+// street = $1 AND info = $2 AND postal_code = $3 AND city = $4 AND country = $5
+
+e.address.exists(_.info.isDefined)
+// ${Same as e.address.isDefined} AND info IS NOT NULL
+
+e.address.forall(_.city === "Paris")
+// ${Same as e.address.isEmpty} OR city = $1
+```
+
+TODO: creating own operators
+
+## Queries and Commands builders
+
+### Select
+
+Only simple select queries can be generated using **Blaireau**, for more advance ones, it is better to use **Skunk** sql
+interpolator.
+
+There are options regarding the selection of fields:
+
+- Whole object selection
+- Specific fields selection
+
+For the whole object selection, the `select` function should not have parameters
+
+```scala
+val users: Query[Void, User] = users.select...
+```
+
+For a more specific selection of fields, it can be done using the `~` operator as explained in
+the [Field selection](#field-selection) section.
+
+```scala
+import skunk.~
+val namesAndAge: Query[Void, String ~ Int] = users.select(e => e.firstName ~ e.age)...
+```
+
+#### Where
+
+A select query has three functions which can be used for composing the where part (no where is considered as `TRUE`).
+
+- `.where(...)` is the first function to use.
+- `.whereAnd(...)` is appending the previous where and the one specified as parameter with an `AND`
+- `.whereOr(...)` is like the previous one but with `OR`
 
 #### Querying
 
 Once the select query fits your needs, you can chose the function which fits your needs the best.
 
 The `toQuery` function compiles the query into a **Skunk** `Query`.
+
 ```scala
 import java.util.UUID
 val findById: Query[UUID, User] = users.select.where(_.id === UUID.randomUUID()).toQuery
@@ -252,7 +336,7 @@ val findCORQueryInputParams: String ~ Int = findChristopheOrRetired.queryIn
 // Eq to: ("Christophe", 60)
 ```
 
-Or you can use wrappers on **Skunk** which returns a F[...].
+Or you can use wrappers on **Skunk** which returns a F[_].
 
 #### Example
 ```scala
@@ -260,35 +344,28 @@ import cats.effect.MonadCancelThrow
 import blaireau.dsl._
 import skunk.Session
 
-final class UsersSql[F[_]: MonadCancelThrow](s: Session[F]){
+final class UsersSql[F[_]: MonadCancelThrow](s: Resource[F, Session[F]]){
   val users = Table[User]("users")
   
   def findById(id: UUID): F[User] =
-    users.select.where(_.id === id).unique(s)
-  // SELECT firstName, lastName, ..., city, country FROM users WHERE id = $1 
-  // $1 = id
+    s.use(users.select.where(_.id === id).unique(_))
     
   def findByCountry(country: String): F[fs2.Stream[F, User]] =
-    users.select.where(_.address.country === country).stream(s)
+    s.use(users.select.where(_.address.country === country).stream(_))
     
   def findByEmail(email: String): F[Option[User]] =
-    users.select.where(_.email === email).option(s)
+    s.use(users.select.where(_.email === email).option(_))
     
   def findAllEmailsOfPeopleOverTheAgeOf(age: Int): F[fs2.Stream[F, String]] =
-    users.select(_.email).where(_.age > age).stream(s)
-  // SELECT email FROM users WHERE age > $1 
-  // $1 = age
+    s.use(users.select(_.email).where(_.age > age).stream(_))
 }
 ```
 
-TODO: creating own operators
-
 ### Update
 
-#### Update DSL
+The Table's `update` function can be either empty or with a combination of assignments:
 
-The Table's `update` function can take different arguments:
-An accumulation of assignments with the operators below:
+An assignment is done using the operators below:
 
 |        Type       | Scala |     Postgresql    | Blaireau |
 |:-----------------:|:-----:|:-----------------:|:--------:|
@@ -318,7 +395,7 @@ def updateFullUser2(user: User) =
 
 As you can see above, when the full class is updates, you can omit the `:=` operator.
 
-If you want to know more about the `where` function, it has the same dsl as the [Select's where](#where-dsl).
+If you want to know more about the `where` function, it has the same dsl as the [Select's Where](#where).
 
 #### Commands
 Once your `update` command fits your needs, you have three functions which you can use.
@@ -342,20 +419,24 @@ val in: String ~ (String ~ String) = users
 ```
 
 The `execute` function prepares and executes the command with the given `Session`
+
 ```scala
 def updateUser(u: User): F[Completion] =
   users.update(u).where(_.id === u.id).execute(s)
 ```
 
+TODO: generate update functions with n parameters to omit using the combine operator
+
 ### Delete
 
-#### Delete DSL
-Delete uses the same [where](#where-dsl) dsl as Select or Update. 
+Delete uses the same [where](#where) dsl as Select or Update.
 
 #### Commands
+
 Once your `delete` command fits your needs, you have three functions which you can use.
 
 The `toCommand` function returns a **Skunk** `Command[...]`
+
 ```scala
 def deleteSpecificUser(id: UUID): Command[UUID] =
   users.delete.where(_.id === id).toCommand
@@ -374,7 +455,6 @@ def deleteUser(u: UUID): F[Completion] =
 ```
 
 ### Insert
-#### Insert DSL
 
 There are options regarding the insertion of fields:
 - Whole object insertion
@@ -384,7 +464,9 @@ For the whole object insertion, the `insert` function should not have parameters
 ```scala
 val insertUser: Command[User] = users.insert...
 ```
-For a more specific insertion, it can be done using the `~` operator like in the **Skunk** library.
+
+For a more specific insertion, it can be done using the `~` operator seen in the [Field selection](#field-selection)
+section.
 ```scala
 import skunk.~
 val createUserWithTheAddress: Command[UUID ~ Address] = users.insert(e => e.id ~ e.address)...

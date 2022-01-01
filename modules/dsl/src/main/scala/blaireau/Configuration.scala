@@ -18,7 +18,7 @@ object Configuration {
   implicit val default: Configuration = Configuration()
 }
 
-sealed trait FieldFormatter {
+trait FieldFormatter {
   def formatField(str: String): String =
     if (str.isEmpty) throw new IllegalStateException("A field cannot be empty")
     else format(str)
