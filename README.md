@@ -2,17 +2,15 @@
 [![CI](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml/badge.svg)](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/valentinHenry/blaireau/branch/master/graph/badge.svg?token=LFQYEC7QD4)](https://codecov.io/gh/valentinHenry/blaireau)
 
+**Blaireau** is a minimalistic type safe SQL DSL for the [Skunk library](https://github.com/tpolecat/skunk)
 
-**Blaireau** is a codec derivation helper and a minimalistic type safe SQL DSL for the [Skunk library](https://github.com/tpolecat/skunk)
-
-:warning: **Blaireau** is a personal project in addition to being a work in progress, **hence the lack of documentation, code and functionalities.** 
+:warning: **Blaireau** is a personal project in addition to being a work in progress, **hence the lack of documentation,
+code and functionalities.**
 
 If this project interests you, feel free to drop a :star: to encourage me working on this.
 
 ## Table of Content
 - [Quickstart with sbt](#quickstart-with-sbt)
-- [Codec derivation](#codec-derivation)
-    * [Example](#example)
 - [SQL DSL](#sql-dsl)
     * [Metas](#metas)
     * [Table](#table)
@@ -41,11 +39,14 @@ $> sbt publishLocal
 ```
 
 In your `build.sbt` add the following line:
+
 ```scala
-// For skunk-codec derivation
-libraryDependencies += "fr.valentinhenry" %% "blaireau-derivation-codec" % Version
 // For the SQL DSL:
 libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
+// For Timepit's Refined Metas
+libraryDependencies += "fr.valentinhenry" %% "blaireau-refined" % Version
+// For Estatico's Newtype Metas
+libraryDependencies += "fr.valentinhenry" %% "blaireau-estatico" % Version
 ```
 
 ## Codec derivation

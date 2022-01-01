@@ -6,10 +6,10 @@
 package blaireau.metas.instances
 
 import blaireau.metas.{Meta, MetaS}
-import skunk.codec.UuidCodec
+import skunk.codec.uuid._
 
 import java.util.UUID
 
-trait UuidMetaInstances extends UuidCodec {
+trait UuidMetaInstances {
   implicit val uuidMeta: MetaS[UUID] = Meta.of(uuid)
 }

@@ -5,9 +5,4 @@
 
 package blaireau.metas.instances
 
-import blaireau.metas.{Meta, MetaS}
-import skunk.codec.binary._
-
-trait BinaryMetaInstances {
-  implicit val byteArrayMeta: MetaS[Array[Byte]] = Meta.of(bytea)
-}
+package object refined extends RefinedMetaInstances

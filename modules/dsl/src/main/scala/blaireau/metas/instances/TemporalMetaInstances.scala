@@ -6,11 +6,11 @@
 package blaireau.metas.instances
 
 import blaireau.metas.{Meta, MetaS}
-import skunk.codec.TemporalCodecs
+import skunk.codec.temporal._
 
 import java.time._
 
-trait TemporalMetaInstances extends TemporalCodecs {
+trait TemporalMetaInstances {
   implicit val localDateMeta: MetaS[LocalDate]           = Meta.of(date)
   implicit val localTimeMeta: MetaS[LocalTime]           = Meta.of(time)
   implicit val offsetTimeMeta: MetaS[OffsetTime]         = Meta.of(timetz)

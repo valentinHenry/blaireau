@@ -9,6 +9,7 @@ import blaireau.dsl._
 import blaireau.metas.{FieldProduct, Meta}
 import munit.FunSuite
 import shapeless.the
+import skunk.codec.all._
 import skunk.{Codec, ~}
 
 class FieldProductSpec extends FunSuite {

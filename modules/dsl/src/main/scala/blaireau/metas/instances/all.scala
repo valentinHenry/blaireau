@@ -8,10 +8,10 @@ package blaireau.metas.instances
 object all extends AllMetaInstances
 
 trait AllMetaInstances
-  extends NumericCodecInstances
+  extends NumericMetaInstances
   with BinaryMetaInstances
   with UuidMetaInstances
   with EnumMetaInstances
-  with TextCodecInstances
+  with TextMetaInstances
   with BooleanMetaInstances
   with TemporalMetaInstances

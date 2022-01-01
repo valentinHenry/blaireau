@@ -32,26 +32,10 @@ lazy val blaireau = project
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .dependsOn(`codec-derivation`, dsl, tests)
-  .aggregate(`codec-derivation`, dsl, tests)
+  .dependsOn(dsl, refined, newtype, tests)
+  .aggregate(dsl, refined, newtype, tests)
   .enablePlugins(ScalafmtPlugin)
   .enablePlugins(AutomateHeaderPlugin)
-
-lazy val `codec-derivation` = project
-  .in(file("modules/derivation"))
-  .settings(
-    name        := "blaireau-derivation",
-    description := "An automatic and semi-automatic codec derivation for Skunk."
-  )
-  .settings(commonSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      Dependencies.`skunk`,
-      Dependencies.`shapeless`
-    )
-  )
-  .enablePlugins(AutomateHeaderPlugin)
-  .enablePlugins(ScalafmtPlugin)
 
 lazy val dsl = project
   .in(file("modules/dsl"))
@@ -69,17 +53,39 @@ lazy val dsl = project
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
 
+lazy val newtype = project
+  .in(file("modules/newtype"))
+  .settings(
+    name        := "blaireau-newtype",
+    description := "Metas for estatico newtypes."
+  )
+  .settings(commonSettings)
+  .settings(libraryDependencies += Dependencies.`newtype`)
+  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(ScalafmtPlugin)
+  .dependsOn(dsl)
+
+lazy val refined = project
+  .in(file("modules/refined"))
+  .settings(
+    name        := "blaireau-refined",
+    description := "Metas for timepit refined."
+  )
+  .settings(commonSettings)
+  .settings(libraryDependencies += Dependencies.`refined`)
+  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(ScalafmtPlugin)
+  .dependsOn(dsl)
+
 lazy val tests = project
   .in(file("modules/tests"))
   .settings(
-    name        := "blaireau-tests",
-    description := "Test suite of Blaireau."
+    name           := "blaireau-tests",
+    description    := "Test suite of Blaireau.",
+    publish / skip := true
   )
   .settings(commonSettings)
-  .settings(
-    publish / skip := true,
-    libraryDependencies += Dependencies.`munit`
-  )
+  .settings(libraryDependencies += Dependencies.`munit`)
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
-  .dependsOn(`codec-derivation`, dsl)
+  .dependsOn(dsl, refined, newtype)

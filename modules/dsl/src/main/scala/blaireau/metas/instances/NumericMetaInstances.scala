@@ -6,11 +6,9 @@
 package blaireau.metas.instances
 
 import blaireau.metas.{Meta, MetaS}
-import skunk.codec.NumericCodecs
+import skunk.codec.numeric._
 
-object numeric extends NumericCodecInstances
-
-trait NumericCodecInstances extends NumericCodecs {
+trait NumericMetaInstances {
   implicit val shortMeta: MetaS[Short]           = Meta.of(int2)
   implicit val intMeta: MetaS[Int]               = Meta.of(int4)
   implicit val longMeta: MetaS[Long]             = Meta.of(int8)

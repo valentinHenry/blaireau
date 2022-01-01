@@ -10,6 +10,7 @@ import blaireau.dsl.filtering.BooleanAction
 import blaireau.metas.Meta
 import munit.FunSuite
 import shapeless.the
+import skunk.codec.all._
 import skunk.implicits.toIdOps
 import skunk.{Codec, ~}
 

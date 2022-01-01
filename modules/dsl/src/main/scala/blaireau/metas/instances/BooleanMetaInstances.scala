@@ -6,8 +6,8 @@
 package blaireau.metas.instances
 
 import blaireau.metas.{Meta, MetaS}
-import skunk.codec.BooleanCodec
+import skunk.codec.boolean._
 
-trait BooleanMetaInstances extends BooleanCodec {
+trait BooleanMetaInstances {
   implicit val booleanMeta: MetaS[Boolean] = Meta.of(bool)
 }
