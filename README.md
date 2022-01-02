@@ -434,9 +434,18 @@ An assignment is done using the operators below:
 
 These assignments are combined using the `<+>` operator.
 
+The pseudo-variadic `update` function supports up to 15 different assignation params.
+
 ```scala
-val updateFullName(id: UUID, firstName: String, lastName: String) = 
+def updateFullName(id: UUID, firstName: String, lastName: String) =
   users.update(u => (u.firstName := firstName) <+> (u.lastName := lastName)).where(_.id === id).command
+
+def updateFullName2(id: UUID, firstName: String, lastName: String) =
+  users
+    .update(
+      _.firstName := firstName,
+      _.lastName := lastName
+    ).where(_.id === id).command
 ```
 
 Full class / embedded class is also supported
@@ -483,8 +492,6 @@ The `execute` function prepares and executes the command with the given `Session
 def updateUser(u: User): F[Completion] =
   users.update(u).where(_.id === u.id).execute(s)
 ```
-
-TODO: generate update functions with n parameters to omit using the combine operator
 
 ### Delete
 

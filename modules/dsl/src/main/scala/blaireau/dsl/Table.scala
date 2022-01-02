@@ -7,7 +7,7 @@ package blaireau.dsl
 
 import blaireau.dsl.actions.FieldNamePicker
 import blaireau.dsl.assignment.{AssignmentAction, actionAssignmentFolder, assignmentApplier}
-import blaireau.dsl.builders.{DeleteCommandBuilder, InsertCommandBuilder, SelectQueryBuilder, UpdateCommandBuilder}
+import blaireau.dsl.builders.{DeleteCommandBuilder, InsertCommandBuilder, SelectQueryBuilder, UpdateOpt}
 import blaireau.dsl.filtering.BooleanAction
 import blaireau.metas.{FieldProduct, Meta, MetaField}
 import shapeless.HList
@@ -21,9 +21,8 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
   tableName: String,
   picker: FieldNamePicker,
   val meta: Meta.Aux[T, F, MF, EF]
-) {
+) extends UpdateOpt[T, F, MF, EF] {
   type SelectQuery[S <: HList, SC] = SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void]
-  type UpdateCommand[U]            = UpdateCommandBuilder[T, F, MF, EF, U, skunk.Void]
 
   def columns(overrides: (Meta.Aux[T, F, MF, EF] => (MetaField[_], String))*): Table[T, F, MF, EF] = {
     val fieldPicker = overrides
@@ -62,9 +61,6 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
       where = BooleanAction.empty
     )
 
-  def update[U](u: Meta.Aux[T, F, MF, EF] => AssignmentAction[U]): UpdateCommand[U] =
-    update(u(meta))
-
   def update[MEF <: HList, LRO, UF](elt: T)(implicit
     m: Mapper.Aux[assignmentApplier.type, EF, MEF],
     r: LeftReducer.Aux[MEF, actionAssignmentFolder.type, LRO],
@@ -73,7 +69,7 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
   ): UpdateCommand[T] =
     update(meta := elt)
 
-  private[this] def update[U](updates: AssignmentAction[U]): UpdateCommand[U] =
+  override protected[this] def update[U](updates: AssignmentAction[U]): UpdateCommand[U] =
     new UpdateCommand[U](tableName, picker, meta, updates, BooleanAction.empty)
 
   def delete: DeleteCommandBuilder[T, F, MF, EF, skunk.Void] =

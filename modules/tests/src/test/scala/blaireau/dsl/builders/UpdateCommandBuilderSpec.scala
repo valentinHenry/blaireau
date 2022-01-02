@@ -29,4 +29,20 @@ class UpdateCommandBuilderSpec extends FunSuite {
     assertEquals(c.commandIn, (5, "Robert"))
     assertEquals(command.sql, "UPDATE blaireaux SET age = $1 WHERE name = $2")
   }
+
+  test("update multiple fields with compose") {
+    val c                                       = blaireaux.update(e => (e.age := 5) <+> (e.name := "treboR")).where(_.name === "Robert")
+    val command: Command[Int ~ String ~ String] = c.toCommand
+
+    assertEquals(c.commandIn, ((5, "treboR"), "Robert"))
+    assertEquals(command.sql, "UPDATE blaireaux SET age = $1, name = $2 WHERE name = $3")
+  }
+
+  test("update multiple fields with pseudo-variadic") {
+    val c                                       = blaireaux.update(_.age := 5, _.name := "treboR").where(_.name === "Robert")
+    val command: Command[Int ~ String ~ String] = c.toCommand
+
+    assertEquals(c.commandIn, ((5, "treboR"), "Robert"))
+    assertEquals(command.sql, "UPDATE blaireaux SET age = $1, name = $2 WHERE name = $3")
+  }
 }
