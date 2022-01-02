@@ -48,14 +48,14 @@ object MetaFieldAssignmentOps {
 
   final class MetaFieldOps[T](mf: MetaField[T]) {
     def :=(right: T): AssignmentOp[T] =
-      AssignmentOp[T](mf.sqlName, mf.codec, right)
+      AssignmentOp[T](mf, right)
   }
 
   final class MetaFieldNumericOps[T](mf: MetaField[T]) {
     def +=(right: T): AssignmentIncr[T] =
-      AssignmentIncr[T](mf.sqlName, mf.codec, right)
+      AssignmentIncr[T](mf, right)
 
     def -=(right: T): AssignmentDecr[T] =
-      AssignmentDecr[T](mf.sqlName, mf.codec, right)
+      AssignmentDecr[T](mf, right)
   }
 }

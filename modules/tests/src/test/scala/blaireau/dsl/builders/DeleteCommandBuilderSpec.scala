@@ -10,7 +10,6 @@ import munit.FunSuite
 import skunk.Command
 
 class DeleteCommandBuilderSpec extends FunSuite {
-
   case class Blaireau(blaireauName: String, age: Int)
 
   val blaireaux = Table[Blaireau]("blaireaux")

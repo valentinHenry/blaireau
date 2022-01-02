@@ -5,6 +5,7 @@
 
 package blaireau.dsl.builders
 
+import blaireau.dsl.actions.FieldNamePicker
 import blaireau.dsl.filtering.{BooleanAction, WhereBuilder}
 import blaireau.metas.Meta
 import blaireau.utils.FragmentUtils
@@ -17,18 +18,19 @@ import skunk.{Command, Session}
 
 final class DeleteCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, W](
   tableName: String,
+  picker: FieldNamePicker,
   private[blaireau] val meta: Meta.Aux[T, F, MF, EF],
   private[blaireau] val where: BooleanAction[W]
 ) extends WhereBuilder[T, F, MF, EF, W] {
-  type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, W0] =
-    DeleteCommandBuilder[T0, F0, MF0, EF0, W0]
+  type SelfT[W0] =
+    DeleteCommandBuilder[T, F, MF, EF, W0]
 
   override def withWhere[NW](newWhere: BooleanAction[NW]): DeleteCommandBuilder[T, F, MF, EF, NW] =
-    new DeleteCommandBuilder[T, F, MF, EF, NW](tableName, meta, newWhere)
+    new DeleteCommandBuilder[T, F, MF, EF, NW](tableName, picker, meta, newWhere)
 
   def toCommand: Command[W] = {
     val deleteFragment = FragmentUtils.const(s"DELETE FROM $tableName")
-    val whereFragment  = where.toFragment
+    val whereFragment  = where.toFragment(picker)
     sql"$deleteFragment WHERE $whereFragment".command
   }
 

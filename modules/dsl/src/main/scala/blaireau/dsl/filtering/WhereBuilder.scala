@@ -10,21 +10,21 @@ import shapeless.HList
 import skunk.~
 
 trait WhereBuilder[T, F <: HList, MF <: HList, EF <: HList, W] {
-  type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, W0]
+  type SelfT[W0]
 
-  def withWhere[NW](newWhere: BooleanAction[NW]): SelfT[T, F, MF, EF, NW]
+  def withWhere[NW](newWhere: BooleanAction[NW]): SelfT[NW]
 
-  final def where[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelfT[T, F, MF, EF, A] =
+  final def where[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelfT[A] =
     withWhere(f(meta))
 
   final def whereAnd[A](
     f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]
-  ): SelfT[T, F, MF, EF, W ~ A] =
+  ): SelfT[W ~ A] =
     withWhere(where && f(meta))
 
   final def whereOr[AC, A](
     f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]
-  ): SelfT[T, F, MF, EF, W ~ A] =
+  ): SelfT[W ~ A] =
     withWhere(where || f(meta))
 
   private[blaireau] def where: BooleanAction[W]

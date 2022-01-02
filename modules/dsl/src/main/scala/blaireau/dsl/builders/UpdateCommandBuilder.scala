@@ -5,6 +5,7 @@
 
 package blaireau.dsl.builders
 
+import blaireau.dsl.actions.FieldNamePicker
 import blaireau.dsl.assignment.AssignmentAction
 import blaireau.dsl.filtering.{BooleanAction, WhereBuilder}
 import blaireau.metas.Meta
@@ -17,23 +18,23 @@ import skunk.{Command, Session, ~}
 
 final class UpdateCommandBuilder[T, F <: HList, MF <: HList, EF <: HList, U, W](
   tableName: String,
+  picker: FieldNamePicker,
   private[blaireau] val meta: Meta.Aux[T, F, MF, EF],
   updatedFields: AssignmentAction[U],
   private[blaireau] val where: BooleanAction[W]
 ) extends WhereBuilder[T, F, MF, EF, W] {
 
-  override type SelfT[T0, F0 <: HList, MF0 <: HList, EF0 <: HList, W0] =
-    UpdateCommandBuilder[T0, F0, MF0, EF0, U, W0]
+  override type SelfT[W0] = UpdateCommandBuilder[T, F, MF, EF, U, W0]
 
   override def withWhere[NW](
     newWhere: BooleanAction[NW]
   ): UpdateCommandBuilder[T, F, MF, EF, U, NW] =
-    new UpdateCommandBuilder[T, F, MF, EF, U, NW](tableName, meta, updatedFields, newWhere)
+    new UpdateCommandBuilder[T, F, MF, EF, U, NW](tableName, picker, meta, updatedFields, newWhere)
 
   def toCommand: Command[U ~ W] = {
     val updateFragment     = FragmentUtils.const(s"UPDATE $tableName")
-    val assignmentFragment = updatedFields.toFragment
-    val whereFragment      = where.toFragment
+    val assignmentFragment = updatedFields.toFragment(picker)
+    val whereFragment      = where.toFragment(picker)
     sql"$updateFragment SET $assignmentFragment WHERE $whereFragment".command
   }
 

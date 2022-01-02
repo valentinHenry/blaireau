@@ -5,8 +5,8 @@
 
 package blaireau.dsl.filtering
 
-import blaireau.dsl.actions.{Action, IMapper}
-import blaireau.metas.{Meta, MetaUtils}
+import blaireau.dsl.actions.{Action, FieldNamePicker, IMapper}
+import blaireau.metas.{Meta, MetaField, MetaUtils}
 import blaireau.utils.FragmentUtils
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}
@@ -20,29 +20,29 @@ sealed trait BooleanAction[A] extends Action[A] with Product with Serializable {
     ForgedBoolean(
       self.codec ~ right.codec,
       self.elt ~ right.elt,
-      sql"(${self.toFragment} AND ${right.toFragment})"
+      picker => sql"(${self.toFragment(picker)} AND ${right.toFragment(picker)})"
     )
 
   def ||[B](right: BooleanAction[B]): BooleanAction[A ~ B] =
     ForgedBoolean(
       self.codec ~ right.codec,
       self.elt ~ right.elt,
-      sql"(${self.toFragment} OR ${right.toFragment})"
+      picker => sql"(${self.toFragment(picker)} OR ${right.toFragment(picker)})"
     )
 
   def unary_! : BooleanAction[A] = ForgedBoolean(
     self.codec,
     self.elt,
-    sql"(NOT ${self.toFragment})"
+    picker => sql"(NOT ${self.toFragment(picker)})"
   )
 }
 
 private[blaireau] final case class ForgedBoolean[A](
   codec: Codec[A],
   elt: A,
-  fragment: Fragment[A]
+  fragment: FieldNamePicker => Fragment[A]
 ) extends BooleanAction[A] {
-  override def toFragment: Fragment[A] = fragment
+  override def toFragment(picker: FieldNamePicker): Fragment[A] = fragment(picker)
 }
 
 object BooleanAction {
@@ -54,7 +54,7 @@ object BooleanAction {
   def empty: BooleanAction[Void] = ForgedBoolean(
     Void.codec,
     Void,
-    sql"TRUE"
+    _ => sql"TRUE"
   )
 
   def imap[A, B](
@@ -63,10 +63,10 @@ object BooleanAction {
     ForgedBoolean(
       m.codec.imap(f)(g),
       f(m.elt),
-      m.toFragment.contramap(g)
+      picker => m.toFragment(picker).contramap(g)
     )
 
-  private[blaireau] def booleanEqAnd[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
+  private[blaireau] def booleanEqAnd[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO, P <: HList](
     meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
@@ -128,40 +128,28 @@ object BooleanAction {
     final override def elt: Void = Void
   }
 
-  final case class BooleanEq[A](sqlField: String, codec: Codec[A], elt: A)
-    extends Action.Op[A]("=", sqlField)
-    with BooleanAction[A]
+  final case class BooleanEq[A](field: MetaField[A], elt: A) extends Action.Op[A]("=", field) with BooleanAction[A]
 
-  final case class BooleanLike[A](sqlField: String, codec: Codec[A], elt: A)
-    extends Action.Op[A]("like", sqlField)
-    with BooleanAction[A]
+  final case class BooleanLike[A](field: MetaField[A], elt: A) extends Action.Op[A]("like", field) with BooleanAction[A]
 
-  final case class BooleanNEq[A](sqlField: String, codec: Codec[A], elt: A)
-    extends Action.Op[A]("<>", sqlField)
-    with BooleanAction[A]
+  final case class BooleanNEq[A](field: MetaField[A], elt: A) extends Action.Op[A]("<>", field) with BooleanAction[A]
 
-  final case class BooleanGt[A](sqlField: String, codec: Codec[A], elt: A)
-    extends Action.Op[A](">", sqlField)
-    with BooleanAction[A]
+  final case class BooleanGt[A](field: MetaField[A], elt: A) extends Action.Op[A](">", field) with BooleanAction[A]
 
-  final case class BooleanGtEq[A](sqlField: String, codec: Codec[A], elt: A)
-    extends Action.Op[A](">=", sqlField)
-    with BooleanAction[A]
+  final case class BooleanGtEq[A](field: MetaField[A], elt: A) extends Action.Op[A](">=", field) with BooleanAction[A]
 
-  final case class BooleanLt[A](sqlField: String, codec: Codec[A], elt: A)
-    extends Action.Op[A]("<", sqlField)
-    with BooleanAction[A]
+  final case class BooleanLt[A](field: MetaField[A], elt: A) extends Action.Op[A]("<", field) with BooleanAction[A]
 
-  final case class BooleanLtEq[A](sqlField: String, codec: Codec[A], elt: A)
-    extends Action.Op[A]("<=", sqlField)
-    with BooleanAction[A]
+  final case class BooleanLtEq[A](field: MetaField[A], elt: A) extends Action.Op[A]("<=", field) with BooleanAction[A]
 
-  final case class BooleanOptionIsEmpty(sqlField: String) extends VoidBooleanAction {
-    override def toFragment: Fragment[Void] = FragmentUtils.const(s"$sqlField IS NULL")
+  final case class BooleanOptionIsEmpty(field: MetaField[_]) extends VoidBooleanAction {
+    override def toFragment(picker: FieldNamePicker): Fragment[Void] =
+      FragmentUtils.const(s"${picker.get(field)} IS NULL")
   }
 
-  final case class BooleanOptionIsDefined(sqlField: String) extends VoidBooleanAction {
-    override def toFragment: Fragment[Void] = FragmentUtils.const(s"$sqlField IS NOT NULL")
+  final case class BooleanOptionIsDefined(field: MetaField[_]) extends VoidBooleanAction {
+    override def toFragment(picker: FieldNamePicker): Fragment[Void] =
+      FragmentUtils.const(s"${picker.get(field)} IS NOT NULL")
   }
 
   final case class BooleanOptionExists[A](sqlField: String, codec: Codec[Option[A]], elt: A)

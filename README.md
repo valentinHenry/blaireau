@@ -18,6 +18,7 @@ If this project interests you, feel free to drop a :star: to encourage me workin
     * [Default Json Type](#default-json-type)
     * [Using the configuration](#using-the-configuration)
 - [Table](#table)
+    * [Overriding sql names](#overriding-sql-names)
 - [Field selection](#field-selection)
 - [Filtering](#filtering)
 - [Queries and Commands builders](#queries-and-commands-builders)
@@ -130,7 +131,55 @@ val users = Table[User]("users")
 
 We will be using the table above for all following examples.
 
-TODO: override field names
+### Overriding sql names
+
+Sometimes it is necessary to override sql fields name in case an object has fields which does not correspond to the
+formatted one. For example:
+
+```sql
+CREATE TABLE childs (
+  id            TEXT PRIMARY KEY,
+  name          TEXT NOT EMPTY
+  mail          TEXT NOT EMPTY,
+  parents_name  TEXT NOT EMPTY,
+  parents_email TEXT NOT EMPTY,
+)
+```
+
+A class mapping directly the fields would look like this:
+
+```scala
+case class Child(id: UUID, name: String, mail: String, parentsName: String, parentsEmail: String)
+```
+
+However, we might want the information name and email contained in am information class, like below:
+
+```scala
+case class Information(name: String, email: String)
+case class Child2(id: UUID, info: Information, parentsInfo: Information)
+```
+
+Using the classes above without overriding the fields names would not work as expected since there will be two "name"
+and two "email" columns.
+
+```scala
+val nonViableTable =  Table[Child2]("childs")
+nonViableTable.select.where(_.id === UUID.randomUUID())
+// SELECT id, name, email, name, email FROM childs WHERE id = $1
+```
+
+To fix this issue, we can tell blaireau to use the given name instead of the derived one.
+
+```scala
+val childs = Table[Child2]("childs")
+  .columns(
+    _.parentsInfo.name -> "parents_name",
+    _.parentsInfo.email -> "parents_email"
+  )
+
+childs.select.where(_.id === UUID.randomUUID())
+// SELECT id name, email, parent_name, parent_email FROM childs where id = $1
+```
 
 ## Field selection
 

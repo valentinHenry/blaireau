@@ -5,6 +5,7 @@
 
 package blaireau.dsl.actions
 
+import blaireau.metas.MetaField
 import blaireau.utils.FragmentUtils
 import skunk.{Codec, Fragment}
 
@@ -14,12 +15,15 @@ trait Action[A] {
 
   def elt: A
 
-  def toFragment: Fragment[A]
+  def toFragment(picker: FieldNamePicker): Fragment[A]
 }
 
 object Action {
-  abstract class Op[A](op: String, fieldName: String) extends Action[A] {
-    override def toFragment: Fragment[A] = FragmentUtils.withValue(s"$fieldName $op ", codec)
+  abstract class Op[A](op: String, field: MetaField[A]) extends Action[A] {
+    override def toFragment(picker: FieldNamePicker): Fragment[A] =
+      FragmentUtils.withValue(s"${picker.get(field)} $op ", codec)
+
+    override def codec: Codec[A] = field.codec
   }
 }
 

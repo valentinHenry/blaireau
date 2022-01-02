@@ -12,17 +12,22 @@ import munit.FunSuite
 import shapeless.the
 import skunk.codec.all._
 import skunk.{Codec, ~}
+
 class AssignmentActionSpec extends FunSuite {
+  val pointCodec: Codec[Points]      = (int8 ~ int4).gimap[Points]
+  val maybeCodec                     = (int4 ~ int8.opt).gimap[Maybe]
+  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec ~ text.opt ~ maybeCodec.opt).gimap[Blaireau]
+  val meta                           = the[Meta[Blaireau]]
+
+  private[this] def assert[A](assign: AssignmentAction[A], dummy: A, sql: String, codec: Codec[A]): Unit = {
+    assertEquals(assign.toFragment(FieldNamePicker.empty).sql, sql)
+    assertEquals(assign.elt, dummy)
+    assertEquals(assign.codec.toString(), codec.toString())
+  }
+
   case class Points(yes: Long, no: Int)
-  val pointCodec: Codec[Points] = (int8 ~ int4).gimap[Points]
 
   case class Maybe(ok: Int, oui: Option[Long])
-  val maybeCodec = (int4 ~ int8.opt).gimap[Maybe]
-
-  case class Blaireau(name: String, age: Int, points: Points, something: Option[String], maybe: Option[Maybe])
-  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec ~ text.opt ~ maybeCodec.opt).gimap[Blaireau]
-
-  val meta = the[Meta[Blaireau]]
 
   test("One simple assignation") {
     assert(meta.name := "newName", "newName", "name = $1", text)
@@ -52,9 +57,5 @@ class AssignmentActionSpec extends FunSuite {
     )
   }
 
-  private[this] def assert[A](assign: AssignmentAction[A], dummy: A, sql: String, codec: Codec[A]): Unit = {
-    assertEquals(assign.toFragment.sql, sql)
-    assertEquals(assign.elt, dummy)
-    assertEquals(assign.codec.toString(), codec.toString())
-  }
+  case class Blaireau(name: String, age: Int, points: Points, something: Option[String], maybe: Option[Maybe])
 }

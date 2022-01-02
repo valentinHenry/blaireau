@@ -13,13 +13,13 @@ import skunk.codec.all._
 import skunk.{Codec, ~}
 
 class FieldProductSpec extends FunSuite {
+  val pointCodec: Codec[Points]      = (int8 ~ int4).gimap[Points]
+  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec).gimap[Blaireau]
+  val meta                           = the[Meta[Blaireau]]
+
   case class Points(yes: Long, no: Int)
-  val pointCodec: Codec[Points] = (int8 ~ int4).gimap[Points]
 
   case class Blaireau(name: String, age: Int, points: Points)
-  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec).gimap[Blaireau]
-
-  val meta = the[Meta[Blaireau]]
 
   test("select all") {
     val s: FieldProduct.Aux[Blaireau, _] = meta

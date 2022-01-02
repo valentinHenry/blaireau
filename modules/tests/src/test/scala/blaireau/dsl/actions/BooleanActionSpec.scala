@@ -15,22 +15,20 @@ import skunk.implicits.toIdOps
 import skunk.{Codec, ~}
 
 class BooleanActionSpec extends FunSuite {
-  case class Points(yes: Long, no: Int)
-
-  val pointCodec: Codec[Points] = (int8 ~ int4).gimap[Points]
-
-  case class Maybe(ok: Int, oui: Option[Long])
-
+  val pointCodec: Codec[Points]      = (int8 ~ int4).gimap[Points]
   val maybeCodec                     = (int4 ~ int8.opt).gimap[Maybe]
   val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec ~ text.opt ~ maybeCodec.opt ~ bool).gimap[Blaireau]
+  val meta                           = the[Meta[Blaireau]]
 
   private[this] def assert[A](assign: BooleanAction[A], dummy: A, sql: String, codec: Codec[A]): Unit = {
-    assertEquals(assign.toFragment.sql, sql)
+    assertEquals(assign.toFragment(FieldNamePicker.empty).sql, sql)
     assertEquals(assign.elt, dummy)
     assertEquals(assign.codec.toString(), codec.toString())
   }
 
-  val meta = the[Meta[Blaireau]]
+  case class Points(yes: Long, no: Int)
+
+  case class Maybe(ok: Int, oui: Option[Long])
 
   test("single equal(=)") {
     assert(meta.name === "test", "test", "name = $1", text)

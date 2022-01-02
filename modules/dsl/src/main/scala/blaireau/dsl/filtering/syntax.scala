@@ -97,7 +97,7 @@ object MetaFieldOps {
 
   class EqualityFieldOps[T](f: MetaField[T]) {
     def ===(right: T): BooleanEq[T] =
-      BooleanEq(f.sqlName, f.codec, right)
+      BooleanEq(f, right)
 
     def =~=(right: T): BooleanEq[T] =
       this === right
@@ -106,38 +106,38 @@ object MetaFieldOps {
       this <> right
 
     def <>(right: T): BooleanNEq[T] =
-      BooleanNEq(f.sqlName, f.codec, right)
+      BooleanNEq(f, right)
   }
 
   class ComparableFieldOps[T](f: MetaField[T]) {
     def >=(right: T): BooleanGtEq[T] =
-      BooleanGtEq(f.sqlName, f.codec, right)
+      BooleanGtEq(f, right)
 
     def >(right: T): BooleanGt[T] =
-      BooleanGt(f.sqlName, f.codec, right)
+      BooleanGt(f, right)
 
     def <=(right: T): BooleanLtEq[T] =
-      BooleanLtEq(f.sqlName, f.codec, right)
+      BooleanLtEq(f, right)
 
     def <(right: T): BooleanLt[T] =
-      BooleanLt(f.sqlName, f.codec, right)
+      BooleanLt(f, right)
   }
 
   class StringFieldOps[T](f: MetaField[T]) {
     def >=(right: T): BooleanGtEq[T] =
-      BooleanGtEq(f.sqlName, f.codec, right)
+      BooleanGtEq(f, right)
 
     def >(right: T): BooleanGt[T] =
-      BooleanGt(f.sqlName, f.codec, right)
+      BooleanGt(f, right)
 
     def <=(right: T): BooleanLtEq[T] =
-      BooleanLtEq(f.sqlName, f.codec, right)
+      BooleanLtEq(f, right)
 
     def <(right: T): BooleanLt[T] =
-      BooleanLt(f.sqlName, f.codec, right)
+      BooleanLt(f, right)
 
     def like(right: T): BooleanLike[T] =
-      BooleanLike(f.sqlName, f.codec, right)
+      BooleanLike(f, right)
   }
 
   class BooleanFieldOps[T](f: MetaField[T]) {
@@ -145,7 +145,7 @@ object MetaFieldOps {
       ForgedBoolean(
         Void.codec,
         Void,
-        FragmentUtils.const(s"${f.sqlName}")
+        picker => FragmentUtils.const(s"${picker.get(f)}")
       )
 
   }
@@ -207,21 +207,6 @@ object MetaFieldOps {
     ): BooleanAction[O] =
       unVoid(isDefined && f(meta.internal))
 
-    def forall[O, MMF <: HList, LRO, V](f: Meta.Aux[T, IF, IMF, IEF] => BooleanAction[O])(implicit
-      m: Mapper.Aux[booleanNotEmptyApplier.type, MF, MMF],
-      r: LeftReducer.Aux[MMF, actionBooleanOrFolder.type, LRO],
-      ev: LRO =:= BooleanAction[V],
-      uv: AllVoid[V]
-    ): BooleanAction[O] =
-      unVoid(isEmpty || f(meta.internal))
-
-    def isEmpty[MMF <: HList, LRO, V](implicit
-      m: Mapper.Aux[booleanNotEmptyApplier.type, MF, MMF],
-      r: LeftReducer.Aux[MMF, actionBooleanOrFolder.type, LRO],
-      ev: LRO =:= BooleanAction[V],
-      uv: AllVoid[V]
-    ): BooleanAction[Void] = !isDefined
-
     def isDefined[MMF <: HList, LRO, V](implicit
       m: Mapper.Aux[booleanNotEmptyApplier.type, MF, MMF],
       r: LeftReducer.Aux[MMF, actionBooleanOrFolder.type, LRO],
@@ -233,17 +218,32 @@ object MetaFieldOps {
       ForgedBoolean(
         Void.codec,
         Void,
-        act.toFragment.contramap(uv.from)
+        picker => act.toFragment(picker).contramap(uv.from)
       )
     }
+
+    def isEmpty[MMF <: HList, LRO, V](implicit
+      m: Mapper.Aux[booleanNotEmptyApplier.type, MF, MMF],
+      r: LeftReducer.Aux[MMF, actionBooleanOrFolder.type, LRO],
+      ev: LRO =:= BooleanAction[V],
+      uv: AllVoid[V]
+    ): BooleanAction[Void] = !isDefined
+
+    def forall[O, MMF <: HList, LRO, V](f: Meta.Aux[T, IF, IMF, IEF] => BooleanAction[O])(implicit
+      m: Mapper.Aux[booleanNotEmptyApplier.type, MF, MMF],
+      r: LeftReducer.Aux[MMF, actionBooleanOrFolder.type, LRO],
+      ev: LRO =:= BooleanAction[V],
+      uv: AllVoid[V]
+    ): BooleanAction[O] =
+      unVoid(isEmpty || f(meta.internal))
   }
 
   class OptionMetaFieldOp[T](mf: OptionalMetaField[T]) extends MetaFieldBooleanSyntax {
     def contains(t: T): BooleanAction[T] = mf.internal === t
 
-    def isEmpty: BooleanOptionIsEmpty = BooleanOptionIsEmpty(mf.sqlName)
+    def isEmpty: BooleanOptionIsEmpty = BooleanOptionIsEmpty(mf)
 
-    def isDefined: BooleanOptionIsDefined = BooleanOptionIsDefined(mf.sqlName)
+    def isDefined: BooleanOptionIsDefined = BooleanOptionIsDefined(mf)
 
     def exists[O](f: MetaField[T] => BooleanAction[O]): BooleanAction[O] =
       unVoid(isDefined && f(mf.internal))

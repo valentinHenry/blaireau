@@ -5,6 +5,7 @@
 
 package blaireau.metas.instances.refined
 
+import blaireau.Configuration
 import blaireau.metas.MetaS
 import blaireau.metas.instances.all._
 import eu.timepit.refined.types.all.PosInt
@@ -12,6 +13,8 @@ import eu.timepit.refined.types.string.NonEmptyString
 import munit.FunSuite
 
 class RefinedMetaInstancesSpec extends FunSuite {
+  implicit val c: Configuration = Configuration.default
+
   test("non empty string") {
     val nesMeta: MetaS[NonEmptyString] = implicitly
 
