@@ -12,6 +12,7 @@ If this project interests you, feel free to drop a :star: to encourage me workin
 ## Table of Content
 - [Quickstart with sbt](#quickstart-with-sbt)
 - [Metas](#metas)
+    * [Datatype integrations](#datatype-integrations)
 - [Configuration](#configuration)
     * [Field formatter](#field-formatter)
     * [String Codec](#string-codec)
@@ -50,12 +51,13 @@ libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
 // For Timepit's Refined Metas
 libraryDependencies += "fr.valentinhenry" %% "blaireau-refined" % Version
 // For Estatico's Newtype Metas
-libraryDependencies += "fr.valentinhenry" %% "blaireau-estatico" % Version
+libraryDependencies += "fr.valentinhenry" %% "blaireau-newtype" % Version
 // For Circe's Json Metas
 libraryDependencies += "fr.valentinhenry" %% "blaireau-circe" % Version
 ```
 
 ## Metas
+
 A meta is a representation of the class in the database. It is derived using Shapeless.
 
 At the moment, only simple types are supported.
@@ -66,6 +68,14 @@ requires only a `skunk.Codec[T]`.
 :warning: It sould only be types, not case class or it will mess with the derivation!
 
 Metas must be implicitly available in the scope where the `Table` and `Meta` generation take places.
+
+### Datatype integrations
+
+Blaireau supports datatypes from the libraries below:
+
+- [Refined](https://github.com/fthomas/refined)
+- [NewType](https://github.com/estatico/scala-newtype)
+- [Circe](https://github.com/circe/circe)
 
 ## Configuration
 
