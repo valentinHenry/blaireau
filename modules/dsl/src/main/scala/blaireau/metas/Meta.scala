@@ -20,8 +20,6 @@ import scala.annotation.nowarn
 trait Meta[A] extends FieldProduct with Dynamic {
   self =>
 
-  import shapeless.record._
-
   override type T = A
   type F <: HList
   type EF <: HList // Extracted Fields ex: (MetaField[F1] -> F1) :: (MetaField[F2] -> F2) :: ... :: HNil
@@ -60,7 +58,7 @@ trait Meta[A] extends FieldProduct with Dynamic {
   private[blaireau] def idMapping: Map[UUID, UUID]
 
   // TODO macro: replace select dynamic by functions of the present fields (to help idea + the user)
-  def selectDynamic(k: String)(implicit s: Selector[F, Symbol @@ k.type]): s.Out = fields.record.selectDynamic(k)
+  def selectDynamic(k: String)(implicit s: Selector[F, Symbol @@ k.type]): s.Out = s(fields)
 }
 
 object Meta {
