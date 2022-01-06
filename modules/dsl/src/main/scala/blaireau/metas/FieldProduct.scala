@@ -9,28 +9,19 @@ import shapeless.HList
 import shapeless.ops.hlist.Prepend
 import skunk.{Codec, ~}
 
-trait FieldProduct { self =>
-  type MF <: HList
-  type T
-
+trait FieldProduct[T, MF <: HList] {
+  self =>
   private[blaireau] def metaFields: MF
+
   private[blaireau] def codec: Codec[T]
 
   def ~[RT, RMF <: HList, OT, OMF <: HList](
-    right: FieldProduct.Aux[RT, RMF]
-  )(implicit prepend: Prepend.Aux[MF, RMF, OMF]): FieldProduct.Aux[self.T ~ RT, OMF] =
-    new FieldProduct {
-      type MF = OMF
-      type T  = self.T ~ RT
-      private[blaireau] override def metaFields: MF = self.metaFields ::: right.metaFields
+    right: FieldProduct[RT, RMF]
+  )(implicit prepend: Prepend.Aux[MF, RMF, OMF]): FieldProduct[T ~ RT, OMF] =
+    new FieldProduct[T ~ RT, OMF] {
+      private[blaireau] override def metaFields: OMF = self.metaFields ::: right.metaFields
 
-      private[blaireau] override def codec: Codec[T] = self.codec ~ right.codec
+      private[blaireau] override def codec: Codec[T ~ RT] = self.codec ~ right.codec
     }
 
-}
-object FieldProduct {
-  type Aux[T0, MF0] = FieldProduct {
-    type T  = T0
-    type MF = MF0
-  }
 }

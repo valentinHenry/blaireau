@@ -18,8 +18,6 @@ import scala.annotation.nowarn
 
 trait OptionalMeta[A] extends Meta[Option[A]] {
   self =>
-  override type T = Option[A]
-
   type F = IF
   type MF <: HList
   type EF <: HList // Extracted Fields ex: (MetaField[F1] -> F1) :: (MetaField[F2] -> F2) :: ... :: HNil
@@ -32,7 +30,6 @@ trait OptionalMeta[A] extends Meta[Option[A]] {
 
   def imap[B](f: A => B)(g: B => A): OptionalMeta.Aux[B, MF, EF, IF, IMF, IEF] =
     new OptionalMeta[B] {
-      override final type T  = Option[B]
       override final type F  = IF
       override final type MF = self.MF
       override final type EF = self.EF
@@ -84,7 +81,6 @@ object OptionalMeta {
   )(
     _extract: Option[T0] => EF0
   ): OptionalMeta.Aux[T0, MF0, EF0, IF0, IMF0, IEF0] = new OptionalMeta[T0] {
-    override final type T  = Option[T0]
     override final type F  = IF
     override final type MF = MF0
     override final type EF = EF0

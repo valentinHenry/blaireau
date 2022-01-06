@@ -17,10 +17,11 @@ import skunk.{Codec, ~}
 import java.util.UUID
 import scala.annotation.nowarn
 
-trait Meta[A] extends FieldProduct with Dynamic {
+trait Meta[A] extends Dynamic {
   self =>
 
-  override type T = A
+  final type T = A
+
   type F <: HList
   type EF <: HList // Extracted Fields ex: (MetaField[F1] -> F1) :: (MetaField[F2] -> F2) :: ... :: HNil
   type MF <: HList
@@ -40,7 +41,6 @@ trait Meta[A] extends FieldProduct with Dynamic {
 
   def imap[B](f: A => B)(g: B => A): Meta.Aux[B, F, MF, EF] =
     new Meta[B] {
-      override final type T  = B
       override final type F  = self.F
       override final type MF = self.MF
       override final type EF = self.EF
@@ -75,8 +75,7 @@ object Meta {
   implicit def optionalMetaS[T](implicit m: MetaS[T]): MetaS[Option[T]] =
     of(m.codec.opt)
 
-  type Aux[T0, F0 <: HList, MF0 <: HList, EF0 <: HList] = Meta[T0] {
-    type T  = T0
+  type Aux[T, F0 <: HList, MF0 <: HList, EF0 <: HList] = Meta[T] {
     type F  = F0
     type MF = MF0
     type EF = EF0

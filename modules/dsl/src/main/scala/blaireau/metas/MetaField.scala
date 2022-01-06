@@ -11,12 +11,10 @@ import skunk.Codec
 import java.util.UUID
 
 // Representation of a db column.
-trait MetaField[H] extends FieldProduct {
+trait MetaField[H] extends FieldProduct[H, MetaField[H] :: HNil] {
   self =>
-  override type MF = MetaField[H] :: HNil
-  override type T  = H
 
-  private[blaireau] override def metaFields: MF = self :: HNil
+  private[blaireau] override def metaFields: MetaField[H] :: HNil = self :: HNil
 
   private[blaireau] def sqlName: String
 

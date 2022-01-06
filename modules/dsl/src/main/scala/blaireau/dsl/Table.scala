@@ -9,6 +9,7 @@ import blaireau.dsl.actions.FieldNamePicker
 import blaireau.dsl.assignment.{AssignmentAction, actionAssignmentFolder, assignmentApplier}
 import blaireau.dsl.builders.{DeleteCommandBuilder, InsertCommandBuilder, SelectQueryBuilder, UpdateOpt}
 import blaireau.dsl.filtering.BooleanAction
+import blaireau.dsl.selection.SelectableMeta
 import blaireau.metas.{FieldProduct, Meta, MetaField}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper, ToList}
@@ -24,9 +25,11 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
 ) extends UpdateOpt[T, F, MF, EF] {
   type SelectQuery[S <: HList, SC] = SelectQueryBuilder[T, F, MF, EF, SC, skunk.Void]
 
-  def columns(overrides: (Meta.Aux[T, F, MF, EF] => (MetaField[_], String))*): Table[T, F, MF, EF] = {
+  def columns(overrides: (SelectableMeta[T, F, MF] => (MetaField[_], String))*): Table[T, F, MF, EF] = {
+    val om: SelectableMeta[T, F, MF] = SelectableMeta.make(meta)
+
     val fieldPicker = overrides
-      .map(_(meta))
+      .map(_(om))
       .map { case (mf, name) => mf.id -> name }
       .toMap
       .pipe(new FieldNamePicker(_, meta.idMapping))
@@ -42,10 +45,10 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
     toList: ToList[MF, MetaField[_]]
   ): SelectQuery[MF, T] = select(meta.metaFields, meta.codec)
 
-  def select[SMF <: HList, SC](s: Meta.Aux[T, F, MF, EF] => FieldProduct.Aux[SC, SMF])(implicit
+  def select[SMF <: HList, SC](s: SelectableMeta[T, F, MF] => FieldProduct[SC, SMF])(implicit
     toList: ToList[SMF, MetaField[_]]
   ): SelectQuery[SMF, SC] = {
-    val selected = s(meta)
+    val selected = s(SelectableMeta.make(meta))
     select(selected.metaFields, selected.codec)
   }
 
@@ -77,7 +80,7 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
 
   type InsertCommand[I] = InsertCommandBuilder[I, InsertCommandBuilder.Ev.Empty]
 
-  def insert[IMF <: HList, IC](u: Meta.Aux[T, F, MF, EF] => FieldProduct.Aux[IC, IMF])(implicit
+  def insert[IMF <: HList, IC](u: Meta.Aux[T, F, MF, EF] => FieldProduct[IC, IMF])(implicit
     toList: ToList[IMF, MetaField[_]]
   ): InsertCommand[IC] = {
     val inserted = u(meta)
