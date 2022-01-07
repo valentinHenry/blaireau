@@ -34,7 +34,7 @@ object AssignableMeta {
     new AssignableMeta[T, F, EF] {
       override private[blaireau] val fields = meta.fields
 
-      override private[blaireau] def assign(t: T): AssignmentAction[T] = meta.assignationExtractor(meta.extract(t))
+      override private[blaireau] def assign(t: T): AssignmentAction[T] = meta.assignationApplier(meta.extract(t))
     }
 
   def makeUnselectable[T, F <: HList, MF <: HList, EF <: HList](
@@ -43,6 +43,6 @@ object AssignableMeta {
     new AssignableMeta[T, HNil, EF] {
       override private[blaireau] def fields: HNil = HNil
 
-      override private[blaireau] def assign(t: T): AssignmentAction[T] = meta.assignationExtractor(meta.extract(t))
+      override private[blaireau] def assign(t: T): AssignmentAction[T] = meta.assignationApplier(meta.extract(t))
     }
 }

@@ -7,10 +7,9 @@ package blaireau.metas
 
 import blaireau.Configuration
 import blaireau.dsl.assignment.AssignationExtractApplier
+import blaireau.dsl.filtering.BooleanExtractApplier
 import shapeless.labelled.{FieldType, field}
 import shapeless.ops.hlist.{Init, Last, Prepend}
-import shapeless.ops.record.Selector
-import shapeless.tag.@@
 import shapeless.{::, <:!<, HList, HNil, LabelledGeneric, Lazy, Witness}
 import skunk.util.Twiddler
 import skunk.{Codec, ~}
@@ -18,7 +17,7 @@ import skunk.{Codec, ~}
 import java.util.UUID
 import scala.annotation.nowarn
 
-trait Meta[A] extends Dynamic {
+trait Meta[A] {
   self =>
 
   final type T = A
@@ -54,17 +53,19 @@ trait Meta[A] extends Dynamic {
 
       override private[blaireau] final val idMapping: Map[UUID, UUID] = self.idMapping
 
-      override private[blaireau] val assignationExtractor: AssignationExtractApplier[T, EF] =
-        self.assignationExtractor.imap(f)(g)
+      override private[blaireau] final val assignationApplier: AssignationExtractApplier[T, EF] =
+        self.assignationApplier.imap(f)(g)
+
+      override private[blaireau] final val booleanApplier = self.booleanApplier.imap(f)(g)
     }
 
   // Id Relation between the meta fields of the Option and the meta fields of the internal
   private[blaireau] def idMapping: Map[UUID, UUID]
 
-  // TODO macro: replace select dynamic by functions of the present fields (to help idea + the user)
-  def selectDynamic(k: String)(implicit s: Selector[F, Symbol @@ k.type]): s.Out = s(fields)
+  private[blaireau] def assignationApplier: AssignationExtractApplier[T, EF]
 
-  private[blaireau] def assignationExtractor: AssignationExtractApplier[T, EF]
+  private[blaireau] def booleanApplier: BooleanExtractApplier[T, EF]
+
 }
 
 object Meta {
@@ -75,7 +76,8 @@ object Meta {
     meta0: Lazy[Meta0.Aux[T, CT, F, MF, EF]],
     tw: Twiddler.Aux[A, CT],
     c: Configuration,
-    ea: AssignationExtractApplier[CT, EF]
+    extractApplier: AssignationExtractApplier[CT, EF],
+    booleanApplier: BooleanExtractApplier[CT, EF]
   ): Meta.Aux[A, F, MF, EF] =
     meta0.value.meta.gmap
 
@@ -97,21 +99,23 @@ object Meta {
     _idMapping: Map[UUID, UUID]
   )(
     _extract: T => EF0
-  )(implicit ae: AssignationExtractApplier[T, EF0]): Meta.Aux[T, F0, MF0, EF0] = new Meta[T] {
-    override final type F  = F0
-    override final type MF = MF0
-    override final type EF = EF0
+  )(implicit aa: AssignationExtractApplier[T, EF0], ba: BooleanExtractApplier[T, EF0]): Meta.Aux[T, F0, MF0, EF0] =
+    new Meta[T] {
+      override final type F  = F0
+      override final type MF = MF0
+      override final type EF = EF0
 
-    override final val codec: Codec[T]                  = _codec
-    private[blaireau] override final val fields: F      = _fields
-    private[blaireau] override final val metaFields: MF = _metaFields
+      override final val codec: Codec[T]                  = _codec
+      private[blaireau] override final val fields: F      = _fields
+      private[blaireau] override final val metaFields: MF = _metaFields
 
-    private[blaireau] override final def extract(t: T): EF0 = _extract(t)
+      private[blaireau] override final def extract(t: T): EF = _extract(t)
 
-    private[blaireau] override final val idMapping: Map[UUID, UUID] = _idMapping
+      private[blaireau] override final val idMapping: Map[UUID, UUID] = _idMapping
 
-    override private[blaireau] val assignationExtractor: AssignationExtractApplier[T, EF0] = ae
-  }
+      private[blaireau] override val assignationApplier: AssignationExtractApplier[T, EF] = aa
+      private[blaireau] override val booleanApplier: BooleanExtractApplier[T, EF]         = ba
+    }
 
   trait Meta0[T] {
     type MetaT
@@ -129,7 +133,10 @@ object Meta {
 
     def extract: MetaT => MetaEF
 
-    def meta(implicit ae: AssignationExtractApplier[MetaT, MetaEF]): Meta.Aux[MetaT, MetaF, MetaMF, MetaEF] =
+    def meta(implicit
+      extractApplier: AssignationExtractApplier[MetaT, MetaEF],
+      booleanApplier: BooleanExtractApplier[MetaT, MetaEF]
+    ): Meta.Aux[MetaT, MetaF, MetaMF, MetaEF] =
       Meta(codec, fields, metaFields, idMapping)(extract)
   }
 

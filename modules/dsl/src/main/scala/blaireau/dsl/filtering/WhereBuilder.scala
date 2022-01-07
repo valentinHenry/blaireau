@@ -14,20 +14,22 @@ trait WhereBuilder[T, F <: HList, MF <: HList, EF <: HList, W] {
 
   def withWhere[NW](newWhere: BooleanAction[NW]): SelfT[NW]
 
-  final def where[A](f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]): SelfT[A] =
-    withWhere(f(meta))
+  private[blaireau] val filterableMeta: FilterableMeta[T, F, EF] = FilterableMeta.make(meta)
+
+  final def where[A](f: FilterableMeta[T, F, EF] => BooleanAction[A]): SelfT[A] =
+    withWhere(f(filterableMeta))
 
   final def whereAnd[A](
-    f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]
+    f: FilterableMeta[T, F, EF] => BooleanAction[A]
   ): SelfT[W ~ A] =
-    withWhere(where && f(meta))
-
-  final def whereOr[AC, A](
-    f: Meta.Aux[T, F, MF, EF] => BooleanAction[A]
-  ): SelfT[W ~ A] =
-    withWhere(where || f(meta))
+    withWhere(where && f(filterableMeta))
 
   private[blaireau] def where: BooleanAction[W]
 
   private[blaireau] def meta: Meta.Aux[T, F, MF, EF]
+
+  final def whereOr[AC, A](
+    f: FilterableMeta[T, F, EF] => BooleanAction[A]
+  ): SelfT[W ~ A] =
+    withWhere(where || f(filterableMeta))
 }

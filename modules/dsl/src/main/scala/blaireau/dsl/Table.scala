@@ -74,10 +74,11 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
 
   type InsertCommand[I] = InsertCommandBuilder[I, InsertCommandBuilder.Ev.Empty]
 
-  def insert[IMF <: HList, IC](u: Meta.Aux[T, F, MF, EF] => FieldProduct[IC, IMF])(implicit
+  def insert[IMF <: HList, IC](u: SelectableMeta[T, F, MF] => FieldProduct[IC, IMF])(implicit
     toList: ToList[IMF, MetaField[_]]
   ): InsertCommand[IC] = {
-    val inserted = u(meta)
+    val om: SelectableMeta[T, F, MF] = SelectableMeta.make(meta)
+    val inserted                     = u(om)
     insert(inserted.metaFields, inserted.codec)
   }
 

@@ -7,6 +7,7 @@ package blaireau.metas
 
 import blaireau.dsl.actions.OptionalTwiddler
 import blaireau.dsl.assignment.AssignationExtractApplier
+import blaireau.dsl.filtering.BooleanExtractApplier
 import blaireau.metas.Meta.Meta0
 import cats.implicits.catsSyntaxOptionId
 import shapeless.labelled.{FieldType, field}
@@ -51,8 +52,11 @@ trait OptionalMeta[A] extends Meta[Option[A]] {
 
       override private[blaireau] final val idMapping: Map[UUID, UUID] = self.idMapping
 
-      override private[blaireau] final val assignationExtractor: AssignationExtractApplier[Option[B], EF] =
-        self.assignationExtractor.imap(_.map(f))(_.map(g))
+      override private[blaireau] final val assignationApplier: AssignationExtractApplier[Option[B], EF] =
+        self.assignationApplier.imap(_.map(f))(_.map(g))
+
+      override private[blaireau] final val booleanApplier: BooleanExtractApplier[Option[B], EF] =
+        self.booleanApplier.imap(_.map(f))(_.map(g))
     }
 
   def codec: Codec[Option[A]]
@@ -84,7 +88,10 @@ object OptionalMeta {
     _idMapping: Map[UUID, UUID]
   )(
     _extract: Option[T0] => EF0
-  )(implicit ae: AssignationExtractApplier[Option[T0], EF0]): OptionalMeta.Aux[T0, MF0, EF0, IF0, IMF0, IEF0] =
+  )(implicit
+    aa: AssignationExtractApplier[Option[T0], EF0],
+    ba: BooleanExtractApplier[Option[T0], EF0]
+  ): OptionalMeta.Aux[T0, MF0, EF0, IF0, IMF0, IEF0] =
     new OptionalMeta[T0] {
       override final type F  = IF
       override final type MF = MF0
@@ -106,7 +113,9 @@ object OptionalMeta {
 
       override private[blaireau] final val idMapping = _idMapping
 
-      override private[blaireau] final val assignationExtractor: AssignationExtractApplier[Option[T0], EF] = ae
+      override private[blaireau] final val assignationApplier: AssignationExtractApplier[Option[T0], EF] = aa
+
+      override private[blaireau] final val booleanApplier: BooleanExtractApplier[Option[T0], EF] = ba
     }
 
   @nowarn("cat=unused")
@@ -133,7 +142,8 @@ object OptionalMeta {
     tl: ToTraversable.Aux[MFID, List, UUID],
     iIdM: Mapper.Aux[toIdMapper.type, IMF, IMFID],
     iTl: ToTraversable.Aux[IMFID, List, UUID],
-    ea: AssignationExtractApplier[CT, EF]
+    extractApplier: AssignationExtractApplier[CT, EF],
+    booleanApplier: BooleanExtractApplier[CT, EF]
   ): OptionalMeta.Aux[A, MF, EF, IF, IMF, IEF] = {
     val internal: Meta.Aux[A, IF, IMF, IEF]      = lInternalMeta.value
     val optional: Meta.Aux[Option[A], F, MF, EF] = lOptionalMeta.value.meta.imap(tw.from)(tw.to)
@@ -148,7 +158,7 @@ object OptionalMeta {
       optional.codec,
       optional.metaFields,
       idMapping
-    )(optional.extract)(optional.assignationExtractor)
+    )(optional.extract)(optional.assignationApplier, optional.booleanApplier)
   }
 }
 

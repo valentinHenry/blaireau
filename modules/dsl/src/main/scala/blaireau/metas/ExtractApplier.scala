@@ -30,10 +30,10 @@ object ExtractApplier {
     reducer: LeftReducer.Aux[MO, LRFun, FO],
     ev: FO =:= OutT[CO],
     tw: Twiddler.Aux[T, CO],
-    _im: IMapper[OutT]
+    im: IMapper[OutT]
   ): ExtractApplier[MFun, LRFun, T, EF, OutT] =
     new ExtractApplier[MFun, LRFun, T, EF, OutT] {
-      override def imapper: IMapper[OutT] = _im
+      override def imapper: IMapper[OutT] = im
 
       override def apply(extracted: EF): OutT[T] =
         imapper.imap(
