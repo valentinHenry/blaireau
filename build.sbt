@@ -15,6 +15,14 @@ lazy val commonSettings = Seq(
   developers := List(
     Developer("Firiath", "Valentin Henry", "valentin.hnry@gmail.com", url("https://valentin-henry.fr"))
   ),
+  publishTo := {
+    val nexus = "https://s01.oss.sonatype.org/"
+    if (isSnapshot.value) Some("snapshots".at(nexus + "content/repositories/snapshots"))
+    else Some("releases".at(nexus + "service/local/staging/deploy/maven2"))
+  },
+  publishMavenStyle    := true,
+  pomIncludeRepository := { _ => false },
+  versionScheme        := Some("early-semver"),
   // Headers
   headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentStyle.cppStyleLineComment),
   headerLicense := Some(
