@@ -6,15 +6,14 @@
 package blaireau.dsl
 
 import blaireau.dsl.actions.FieldNamePicker
-import blaireau.dsl.assignment.{AssignableMeta, AssignmentAction, actionAssignmentFolder, assignmentApplier}
+import blaireau.dsl.assignment.{AssignableMeta, AssignmentAction}
 import blaireau.dsl.builders.{DeleteCommandBuilder, InsertCommandBuilder, SelectQueryBuilder, UpdateOpt}
 import blaireau.dsl.filtering.BooleanAction
 import blaireau.dsl.selection.SelectableMeta
 import blaireau.metas.{FieldProduct, Meta, MetaField}
 import shapeless.HList
-import shapeless.ops.hlist.{LeftReducer, Mapper, ToList}
+import shapeless.ops.hlist.ToList
 import skunk.Codec
-import skunk.util.Twiddler
 
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -64,12 +63,7 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
       where = BooleanAction.empty
     )
 
-  def update[MEF <: HList, LRO, UF](elt: T)(implicit
-    m: Mapper.Aux[assignmentApplier.type, EF, MEF],
-    r: LeftReducer.Aux[MEF, actionAssignmentFolder.type, LRO],
-    ev: LRO =:= AssignmentAction[UF],
-    tw: Twiddler.Aux[T, UF]
-  ): UpdateCommand[T] =
+  def update[MEF <: HList, LRO, UF](elt: T): UpdateCommand[T] =
     update(AssignableMeta.makeSelectable(meta) := elt)
 
   override protected[this] def update[U](updates: AssignmentAction[U]): UpdateCommand[U] =

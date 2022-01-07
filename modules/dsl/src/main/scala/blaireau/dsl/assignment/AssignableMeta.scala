@@ -15,14 +15,16 @@ trait AssignableMeta[T, F <: HList, EF <: HList] extends Dynamic {
   // TODO macro: replace select dynamic by functions of the present fields (to help idea + the user)
   def selectDynamic(k: String)(implicit
     @implicitNotFound(
-      s"The field is either not present in the object or the object is optional (internal fields of an optional object are not supported)"
+      s"The field is either not present in the object or the object is optional (internal fields assignment of an optional object is not supported)"
     )
     s: AssignableSelector[F, Symbol @@ k.type]
   ): s.Out = s(fields)
 
   private[blaireau] def fields: F
 
-  private[blaireau] def extract(t: T): EF
+  def :=(right: T): AssignmentAction[T] = assign(right)
+
+  private[blaireau] def assign(t: T): AssignmentAction[T]
 }
 
 object AssignableMeta {
@@ -30,9 +32,9 @@ object AssignableMeta {
     meta: Meta.Aux[T, F, MF, EF]
   ): AssignableMeta[T, F, EF] =
     new AssignableMeta[T, F, EF] {
-      override private[blaireau] def fields: F = meta.fields
+      override private[blaireau] val fields = meta.fields
 
-      override private[blaireau] def extract(t: T): EF = meta.extract(t)
+      override private[blaireau] def assign(t: T): AssignmentAction[T] = meta.assignationExtractor(meta.extract(t))
     }
 
   def makeUnselectable[T, F <: HList, MF <: HList, EF <: HList](
@@ -41,6 +43,6 @@ object AssignableMeta {
     new AssignableMeta[T, HNil, EF] {
       override private[blaireau] def fields: HNil = HNil
 
-      override private[blaireau] def extract(t: T): EF = meta.extract(t)
+      override private[blaireau] def assign(t: T): AssignmentAction[T] = meta.assignationExtractor(meta.extract(t))
     }
 }

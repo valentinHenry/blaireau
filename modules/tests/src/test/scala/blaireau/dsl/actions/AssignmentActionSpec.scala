@@ -49,6 +49,10 @@ class AssignmentActionSpec extends FunSuite {
     assert(meta.maybe := None, None, "ok = $1, oui = $2", maybeCodec.opt)
   }
 
+  test("Embedded object field assignation") {
+    assert(meta.points.yes := 5L, 5L, "yes = $1", int8)
+  }
+
   test("Full assignation") {
     val dummy = Blaireau("test", 5, Points(5L, 4), None, None)
     assert(

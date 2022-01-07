@@ -6,12 +6,10 @@
 package blaireau.dsl.filtering
 
 import blaireau.dsl.actions.{Action, FieldNamePicker, IMapper}
-import blaireau.metas.{Meta, MetaField, MetaUtils}
+import blaireau.metas.{ExtractApplier, Meta, MetaField}
 import blaireau.utils.FragmentUtils
 import shapeless.HList
-import shapeless.ops.hlist.{LeftReducer, Mapper}
 import skunk.implicits.{toIdOps, toStringOps}
-import skunk.util.Twiddler
 import skunk.{Codec, Fragment, Void, ~}
 
 sealed trait BooleanAction[A] extends Action[A] with Product with Serializable {
@@ -70,57 +68,33 @@ object BooleanAction {
     meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
-    mapper: Mapper.Aux[booleanEqAndApplier.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionBooleanAndFolder.type, FO],
-    ev: FO =:= BooleanAction[CO],
-    tw: Twiddler.Aux[A, CO]
+    ea: ExtractApplier[booleanEqAndApplier.type, actionBooleanAndFolder.type, A, EF, BooleanAction]
   ): BooleanAction[A] =
-    MetaUtils.applyExtract[booleanEqAndApplier.type, actionBooleanAndFolder.type, A, EF, MO, FO, CO, BooleanAction](
-      elt,
-      meta.extract
-    )
+    ea(meta.extract(elt))
 
   private[blaireau] def booleanEqOr[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
     meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
-    mapper: Mapper.Aux[booleanEqOrApplier.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionBooleanOrFolder.type, FO],
-    ev: FO =:= BooleanAction[CO],
-    tw: Twiddler.Aux[A, CO]
+    ea: ExtractApplier[booleanEqOrApplier.type, actionBooleanOrFolder.type, A, EF, BooleanAction]
   ): BooleanAction[A] =
-    MetaUtils.applyExtract[booleanEqOrApplier.type, actionBooleanOrFolder.type, A, EF, MO, FO, CO, BooleanAction](
-      elt,
-      meta.extract
-    )
+    ea(meta.extract(elt))
 
   private[blaireau] def booleanNEqAnd[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
     meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
-    mapper: Mapper.Aux[booleanNEqAndApplier.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionBooleanAndFolder.type, FO],
-    ev: FO =:= BooleanAction[CO],
-    tw: Twiddler.Aux[A, CO]
+    ea: ExtractApplier[booleanNEqAndApplier.type, actionBooleanAndFolder.type, A, EF, BooleanAction]
   ): BooleanAction[A] =
-    MetaUtils.applyExtract[booleanNEqAndApplier.type, actionBooleanAndFolder.type, A, EF, MO, FO, CO, BooleanAction](
-      elt,
-      meta.extract
-    )
+    ea(meta.extract(elt))
 
   private[blaireau] def booleanNEqOr[A, F <: HList, MF <: HList, EF <: HList, MO <: HList, FO, CO](
     meta: Meta.Aux[A, F, MF, EF],
     elt: A
   )(implicit
-    mapper: Mapper.Aux[booleanNEqOrApplier.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionBooleanOrFolder.type, FO],
-    ev: FO =:= BooleanAction[CO],
-    tw: Twiddler.Aux[A, CO]
+    ea: ExtractApplier[booleanNEqOrApplier.type, actionBooleanOrFolder.type, A, EF, BooleanAction]
   ): BooleanAction[A] =
-    MetaUtils.applyExtract[booleanNEqOrApplier.type, actionBooleanOrFolder.type, A, EF, MO, FO, CO, BooleanAction](
-      elt,
-      meta.extract
-    )
+    ea(meta.extract(elt))
 
   trait VoidBooleanAction extends BooleanAction[Void] {
     final override val codec: Codec[Void] = Void.codec

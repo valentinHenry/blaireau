@@ -6,9 +6,7 @@
 package blaireau.dsl.assignment
 
 import blaireau.metas._
-import shapeless.ops.hlist.{LeftReducer, Mapper}
 import shapeless.{HList, Poly1, Poly2}
-import skunk.util.Twiddler
 import skunk.~
 
 object assignmentApplier extends Poly1 with MetaFieldAssignmentSyntax {
@@ -22,15 +20,9 @@ object assignmentApplier extends Poly1 with MetaFieldAssignmentSyntax {
   }
 
   implicit def metaAssignment[A, F <: HList, MF <: HList, EF <: HList, OEF <: HList, MO <: HList, FO, CO](implicit
-    mapper: Mapper.Aux[this.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
-    ev: FO =:= AssignmentAction[CO],
-    tw: Twiddler.Aux[A, CO]
+    ea: ExtractApplier[this.type, actionAssignmentFolder.type, A, EF, AssignmentAction]
   ): Case.Aux[ExtractedMeta[A, F, MF, EF], AssignmentAction[A]] = at { case (meta, elt) =>
-    MetaUtils.applyExtract[this.type, actionAssignmentFolder.type, A, EF, MO, FO, CO, AssignmentAction](
-      elt,
-      meta.extract
-    )
+    ea(meta.extract(elt))
   }
 
   implicit def optionalMetaAssignment[
@@ -44,15 +36,9 @@ object assignmentApplier extends Poly1 with MetaFieldAssignmentSyntax {
     FO,
     CO
   ](implicit
-    mapper: Mapper.Aux[this.type, EF, MO],
-    r: LeftReducer.Aux[MO, actionAssignmentFolder.type, FO],
-    ev: FO =:= AssignmentAction[CO],
-    tw: Twiddler.Aux[Option[A], CO]
+    ea: ExtractApplier[this.type, actionAssignmentFolder.type, Option[A], EF, AssignmentAction]
   ): Case.Aux[ExtractedOptionalMeta[A, MF, EF, IF, IMF, IEF], AssignmentAction[Option[A]]] = at { case (meta, elt) =>
-    MetaUtils.applyExtract[this.type, actionAssignmentFolder.type, Option[A], EF, MO, FO, CO, AssignmentAction](
-      elt,
-      meta.extract
-    )
+    ea(meta.extract(elt))
   }
 }
 

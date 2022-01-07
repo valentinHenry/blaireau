@@ -52,6 +52,12 @@ class FieldProductSpec extends FunSuite {
     assertEquals(s.codec.toString, (text ~ pointCodec).toString())
   }
 
+  test("select embedded internal field") {
+    val s: FieldProduct[Long, _] = meta.points.yes
+
+    assertEquals(s.codec.toString, int8.toString())
+  }
+
   test("select embedded field") {
     val s: FieldProduct[Long, _] = meta.points.yes
 

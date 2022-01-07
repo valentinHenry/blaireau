@@ -6,6 +6,7 @@
 package blaireau.metas
 
 import blaireau.dsl.actions.OptionalTwiddler
+import blaireau.dsl.assignment.AssignationExtractApplier
 import blaireau.metas.Meta.Meta0
 import cats.implicits.catsSyntaxOptionId
 import shapeless.labelled.{FieldType, field}
@@ -38,17 +39,20 @@ trait OptionalMeta[A] extends Meta[Option[A]] {
       override final type IMF = self.IMF
       override final type IEF = self.IEF
 
-      override def fields: IF = self.fields
+      override private[blaireau] final val fields: IF = self.fields
 
-      override def internal: Meta.Aux[B, IF, IMF, IEF] = self.internal.imap(f)(g)
+      override final val internal: Meta.Aux[B, IF, IMF, IEF] = self.internal.imap(f)(g)
 
-      override def codec: Codec[Option[B]] = self.codec.imap(_.map(f))(_.map(g))
+      override final def codec: Codec[Option[B]] = self.codec.imap(_.map(f))(_.map(g))
 
-      override private[blaireau] def metaFields: MF = self.metaFields
+      override private[blaireau] final val metaFields: MF = self.metaFields
 
-      override private[blaireau] def extract(t: Option[B]): EF = self.extract(t.map(g))
+      override private[blaireau] final def extract(t: Option[B]): EF = self.extract(t.map(g))
 
-      override private[blaireau] def idMapping: Map[UUID, UUID] = self.idMapping
+      override private[blaireau] final val idMapping: Map[UUID, UUID] = self.idMapping
+
+      override private[blaireau] final val assignationExtractor: AssignationExtractApplier[Option[B], EF] =
+        self.assignationExtractor.imap(_.map(f))(_.map(g))
     }
 
   def codec: Codec[Option[A]]
@@ -80,27 +84,30 @@ object OptionalMeta {
     _idMapping: Map[UUID, UUID]
   )(
     _extract: Option[T0] => EF0
-  ): OptionalMeta.Aux[T0, MF0, EF0, IF0, IMF0, IEF0] = new OptionalMeta[T0] {
-    override final type F  = IF
-    override final type MF = MF0
-    override final type EF = EF0
+  )(implicit ae: AssignationExtractApplier[Option[T0], EF0]): OptionalMeta.Aux[T0, MF0, EF0, IF0, IMF0, IEF0] =
+    new OptionalMeta[T0] {
+      override final type F  = IF
+      override final type MF = MF0
+      override final type EF = EF0
 
-    override final type IF  = IF0
-    override final type IMF = IMF0
-    override final type IEF = IEF0
+      override final type IF  = IF0
+      override final type IMF = IMF0
+      override final type IEF = IEF0
 
-    override final val internal: Meta.Aux[T0, IF0, IMF0, IEF0] = _internal
+      override final val internal: Meta.Aux[T0, IF0, IMF0, IEF0] = _internal
 
-    override final val codec: Codec[Option[T0]] = _codec
+      override final val codec: Codec[Option[T0]] = _codec
 
-    override private[blaireau] final val metaFields: MF = _metaFields
+      override private[blaireau] final val metaFields: MF = _metaFields
 
-    override private[blaireau] final def extract(t: T): EF = _extract(t)
+      override private[blaireau] final def extract(t: T): EF = _extract(t)
 
-    override private[blaireau] final val fields: F = _internal.fields
+      override private[blaireau] final val fields: F = _internal.fields
 
-    override private[blaireau] final val idMapping = _idMapping
-  }
+      override private[blaireau] final val idMapping = _idMapping
+
+      override private[blaireau] final val assignationExtractor: AssignationExtractApplier[Option[T0], EF] = ae
+    }
 
   @nowarn("cat=unused")
   implicit final def genericMetaEncoder[
@@ -125,7 +132,8 @@ object OptionalMeta {
     idM: Mapper.Aux[toIdMapper.type, MF, MFID],
     tl: ToTraversable.Aux[MFID, List, UUID],
     iIdM: Mapper.Aux[toIdMapper.type, IMF, IMFID],
-    iTl: ToTraversable.Aux[IMFID, List, UUID]
+    iTl: ToTraversable.Aux[IMFID, List, UUID],
+    ea: AssignationExtractApplier[CT, EF]
   ): OptionalMeta.Aux[A, MF, EF, IF, IMF, IEF] = {
     val internal: Meta.Aux[A, IF, IMF, IEF]      = lInternalMeta.value
     val optional: Meta.Aux[Option[A], F, MF, EF] = lOptionalMeta.value.meta.imap(tw.from)(tw.to)
@@ -140,7 +148,7 @@ object OptionalMeta {
       optional.codec,
       optional.metaFields,
       idMapping
-    )(optional.extract)
+    )(optional.extract)(optional.assignationExtractor)
   }
 }
 

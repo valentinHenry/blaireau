@@ -6,28 +6,55 @@
 package blaireau.metas
 
 import blaireau.dsl.actions.IMapper
-import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}
+import shapeless.{HList, HNil}
 import skunk.util.Twiddler
 
-object MetaUtils {
-  def applyExtract[MFun, LRFun, A, EF <: HList, MO <: HList, FO, CO, OutT[_]](
-    elt: A,
-    extract: A => EF
-  )(implicit
+trait ExtractApplier[MFun, LRFun, T, EF, OutT[_]] {
+  self =>
+  def imapper: IMapper[OutT]
+
+  def apply(extracted: EF): OutT[T]
+
+  def imap[B](f: T => B)(g: B => T): ExtractApplier[MFun, LRFun, B, EF, OutT] =
+    new ExtractApplier[MFun, LRFun, B, EF, OutT] {
+      override def imapper: IMapper[OutT] = self.imapper
+
+      override def apply(extracted: EF): OutT[B] = imapper.imap(self(extracted))(f)(g)
+    }
+}
+
+object ExtractApplier {
+  implicit def instance[MFun, LRFun, T, EF <: HList, MO <: HList, FO, CO, OutT[_]](implicit
     mapper: Mapper.Aux[MFun, EF, MO],
     reducer: LeftReducer.Aux[MO, LRFun, FO],
     ev: FO =:= OutT[CO],
-    tw: Twiddler.Aux[A, CO],
-    im: IMapper[OutT]
-  ): OutT[A] =
-    im.imap(
-      ev(
-        reducer(
-          mapper(
-            extract(elt)
+    tw: Twiddler.Aux[T, CO],
+    _im: IMapper[OutT]
+  ): ExtractApplier[MFun, LRFun, T, EF, OutT] =
+    new ExtractApplier[MFun, LRFun, T, EF, OutT] {
+      override def imapper: IMapper[OutT] = _im
+
+      override def apply(extracted: EF): OutT[T] =
+        imapper.imap(
+          ev(
+            reducer(
+              mapper(
+                extracted
+              )
+            )
           )
-        )
+        )(tw.from)(tw.to)
+    }
+
+  implicit def fieldExtractApplier[MFun, LRFun, T, OutT[_]](implicit
+    im: IMapper[OutT]
+  ): ExtractApplier[MFun, LRFun, T, HNil, OutT] =
+    new ExtractApplier[MFun, LRFun, T, HNil, OutT] {
+      override def imapper: IMapper[OutT] = im
+
+      override def apply(extracted: HNil): OutT[T] = throw new IllegalStateException(
+        "it is impossible to extract on fields"
       )
-    )(tw.from)(tw.to)
+    }
 }

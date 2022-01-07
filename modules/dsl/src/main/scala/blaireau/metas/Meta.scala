@@ -6,6 +6,7 @@
 package blaireau.metas
 
 import blaireau.Configuration
+import blaireau.dsl.assignment.AssignationExtractApplier
 import shapeless.labelled.{FieldType, field}
 import shapeless.ops.hlist.{Init, Last, Prepend}
 import shapeless.ops.record.Selector
@@ -52,6 +53,9 @@ trait Meta[A] extends Dynamic {
       override private[blaireau] final def extract(t: B): EF = self.extract(g(t))
 
       override private[blaireau] final val idMapping: Map[UUID, UUID] = self.idMapping
+
+      override private[blaireau] val assignationExtractor: AssignationExtractApplier[T, EF] =
+        self.assignationExtractor.imap(f)(g)
     }
 
   // Id Relation between the meta fields of the Option and the meta fields of the internal
@@ -59,6 +63,8 @@ trait Meta[A] extends Dynamic {
 
   // TODO macro: replace select dynamic by functions of the present fields (to help idea + the user)
   def selectDynamic(k: String)(implicit s: Selector[F, Symbol @@ k.type]): s.Out = s(fields)
+
+  private[blaireau] def assignationExtractor: AssignationExtractApplier[T, EF]
 }
 
 object Meta {
@@ -68,7 +74,8 @@ object Meta {
     generic: LabelledGeneric.Aux[A, T],
     meta0: Lazy[Meta0.Aux[T, CT, F, MF, EF]],
     tw: Twiddler.Aux[A, CT],
-    c: Configuration
+    c: Configuration,
+    ea: AssignationExtractApplier[CT, EF]
   ): Meta.Aux[A, F, MF, EF] =
     meta0.value.meta.gmap
 
@@ -90,7 +97,7 @@ object Meta {
     _idMapping: Map[UUID, UUID]
   )(
     _extract: T => EF0
-  ): Meta.Aux[T, F0, MF0, EF0] = new Meta[T] {
+  )(implicit ae: AssignationExtractApplier[T, EF0]): Meta.Aux[T, F0, MF0, EF0] = new Meta[T] {
     override final type F  = F0
     override final type MF = MF0
     override final type EF = EF0
@@ -102,6 +109,8 @@ object Meta {
     private[blaireau] override final def extract(t: T): EF0 = _extract(t)
 
     private[blaireau] override final val idMapping: Map[UUID, UUID] = _idMapping
+
+    override private[blaireau] val assignationExtractor: AssignationExtractApplier[T, EF0] = ae
   }
 
   trait Meta0[T] {
@@ -110,7 +119,18 @@ object Meta {
     type MetaMF <: HList
     type MetaEF <: HList
 
-    def meta: Meta.Aux[MetaT, MetaF, MetaMF, MetaEF]
+    def codec: Codec[MetaT]
+
+    def fields: MetaF
+
+    def metaFields: MetaMF
+
+    def idMapping: Map[UUID, UUID]
+
+    def extract: MetaT => MetaEF
+
+    def meta(implicit ae: AssignationExtractApplier[MetaT, MetaEF]): Meta.Aux[MetaT, MetaF, MetaMF, MetaEF] =
+      Meta(codec, fields, metaFields, idMapping)(extract)
   }
 
   object Meta0 {
@@ -121,23 +141,58 @@ object Meta {
       type MetaEF = EF
     }
 
-    def apply[T, MT, F <: HList, MF <: HList, EF <: HList](
-      codec: Codec[MT],
-      fields: F,
-      metaFields: MF,
-      idMapping: Map[UUID, UUID]
-    )(
-      extract: MT => EF
-    ): Meta0.Aux[T, MT, F, MF, EF] =
-      new Meta0[T] {
-        override final type MetaT  = MT
-        override final type MetaF  = F
-        override final type MetaMF = MF
-        override final type MetaEF = EF
+    @nowarn("cat=unused")
+    implicit def hlistField[
+      A <: HList,   // The object Generic Representation
+      AF <: HList,  // Fields of the object
+      AMF <: HList, // MetaFields of the object
+      AEF <: HList, // Extracted fields type of the object
+      B <: HList,   // The previous elements of A without L
+      BM,           // Meta type of the previous elements
+      BF <: HList,  // Fields of the previous elements
+      BMF <: HList, // MetaFields of the previous elements
+      BEF <: HList, // Extracted Fields type of the previous elements
+      LFT,          // LastElement FieldType
+      L,            // Last element type
+      K <: Symbol   // FieldName of the last element
+    ](implicit
+      init: Init.Aux[A, B],
+      last: Last.Aux[A, LFT],
+      aPrepend: Prepend.Aux[B, LFT :: HNil, A],
+      ev: LFT =:= FieldType[K, L],
+      evNotOption: L <:!< Option[_],
+      w: Witness.Aux[K],
+      previous: Meta0.Aux[B, BM, BF, BMF, BEF],
+      lMeta: Lazy[MetaS[L]],
+      fPrepend: Prepend.Aux[BF, FieldType[K, MetaField[L]] :: HNil, AF],
+      mfPrepend: Prepend.Aux[BMF, MetaField[L] :: HNil, AMF],
+      efPrepend: Prepend.Aux[BEF, ExtractedField[L] :: HNil, AEF],
+      c: Configuration
+    ): Meta0.Aux[A, BM ~ L, AF, AMF, AEF] = {
+      val fieldName: String = w.value.name
+      val fid               = UUID.randomUUID()
 
-        override final val meta: Meta.Aux[MetaT, MetaF, MetaMF, MetaEF] =
-          Meta(codec, fields, metaFields, idMapping)(extract)
+      // Simple type
+      val metaField =
+        new MetaField[L] {
+          override def sqlName: String = c.fieldFormatter.formatField(fieldName)
+
+          override def name: String = fieldName
+
+          override def codec: Codec[L] = lMeta.value.codec
+
+          override private[blaireau] val id = fid
+        }
+
+      Meta0(
+        previous.codec ~ metaField.codec,
+        previous.fields ::: (field[K](metaField) :: HNil),
+        previous.metaFields ::: (metaField :: HNil),
+        previous.idMapping
+      ) { case (b, l) =>
+        previous.extract(b) ::: (metaField -> l :: HNil)
       }
+    }
 
     @nowarn("cat=unused")
     implicit def baseField[K <: Symbol, H](implicit
@@ -273,59 +328,6 @@ object Meta {
     }
 
     @nowarn("cat=unused")
-    implicit def hlistField[
-      A <: HList,   // The object Generic Representation
-      AF <: HList,  // Fields of the object
-      AMF <: HList, // MetaFields of the object
-      AEF <: HList, // Extracted fields type of the object
-      B <: HList,   // The previous elements of A without L
-      BM,           // Meta type of the previous elements
-      BF <: HList,  // Fields of the previous elements
-      BMF <: HList, // MetaFields of the previous elements
-      BEF <: HList, // Extracted Fields type of the previous elements
-      LFT,          // LastElement FieldType
-      L,            // Last element type
-      K <: Symbol   // FieldName of the last element
-    ](implicit
-      init: Init.Aux[A, B],
-      last: Last.Aux[A, LFT],
-      aPrepend: Prepend.Aux[B, LFT :: HNil, A],
-      ev: LFT =:= FieldType[K, L],
-      evNotOption: L <:!< Option[_],
-      w: Witness.Aux[K],
-      previous: Meta0.Aux[B, BM, BF, BMF, BEF],
-      lMeta: Lazy[MetaS[L]],
-      fPrepend: Prepend.Aux[BF, FieldType[K, MetaField[L]] :: HNil, AF],
-      mfPrepend: Prepend.Aux[BMF, MetaField[L] :: HNil, AMF],
-      efPrepend: Prepend.Aux[BEF, ExtractedField[L] :: HNil, AEF],
-      c: Configuration
-    ): Meta0.Aux[A, BM ~ L, AF, AMF, AEF] = {
-      val fieldName: String = w.value.name
-      val fid               = UUID.randomUUID()
-
-      // Simple type
-      val metaField =
-        new MetaField[L] {
-          override def sqlName: String = c.fieldFormatter.formatField(fieldName)
-
-          override def name: String = fieldName
-
-          override def codec: Codec[L] = lMeta.value.codec
-
-          override private[blaireau] val id = fid
-        }
-
-      Meta0(
-        previous.meta.codec ~ metaField.codec,
-        previous.meta.fields ::: (field[K](metaField) :: HNil),
-        previous.meta.metaFields ::: (metaField :: HNil),
-        previous.meta.idMapping
-      ) { case (b, l) =>
-        previous.meta.extract(b) ::: (metaField -> l :: HNil)
-      }
-    }
-
-    @nowarn("cat=unused")
     implicit def hlistOptionalField[
       A <: HList,   // The object Generic Representation
       AF <: HList,  // Fields of the object
@@ -368,12 +370,12 @@ object Meta {
         }.opt
 
       Meta0[A, BM ~ Option[L], AF, AMF, AEF](
-        previous.meta.codec ~ metaField.codec,
-        previous.meta.fields ::: (field[K](metaField) :: HNil),
-        previous.meta.metaFields ::: (metaField :: HNil),
-        previous.meta.idMapping
+        previous.codec ~ metaField.codec,
+        previous.fields ::: (field[K](metaField) :: HNil),
+        previous.metaFields ::: (metaField :: HNil),
+        previous.idMapping
       ) { case (b, l) =>
-        previous.meta.extract(b) ::: (metaField -> l :: HNil)
+        previous.extract(b) ::: (metaField -> l :: HNil)
       }
     }
 
@@ -411,15 +413,15 @@ object Meta {
     ): Meta0.Aux[A, BM ~ L, AF, AMF, AEF] = {
       val meta: Meta.Aux[L, LF, LMF, LEF]                  = lMeta.value
       val metaElt: FieldType[K, Meta.Aux[L, LF, LMF, LEF]] = field[K](meta)
-      val codec: Codec[BM ~ L]                             = previous.meta.codec ~ meta.codec
+      val codec: Codec[BM ~ L]                             = previous.codec ~ meta.codec
 
       Meta0(
         codec,
-        previous.meta.fields ::: (metaElt :: HNil),
-        previous.meta.metaFields ::: meta.metaFields,
-        previous.meta.idMapping ++ meta.idMapping
+        previous.fields ::: (metaElt :: HNil),
+        previous.metaFields ::: meta.metaFields,
+        previous.idMapping ++ meta.idMapping
       ) { case (b, l) =>
-        previous.meta.extract(b) ::: (meta -> l) :: HNil
+        previous.extract(b) ::: (meta -> l) :: HNil
       }
     }
 
@@ -457,17 +459,35 @@ object Meta {
     ): Meta0.Aux[A, BM ~ Option[L], AF, AMF, AEF] = {
       val meta: OptionalMeta.Aux[L, LMF, LEF, LIF, LIMF, LIEF]                  = lMeta.value
       val metaElt: FieldType[K, OptionalMeta.Aux[L, LMF, LEF, LIF, LIMF, LIEF]] = field[K](meta)
-      val codec: Codec[BM ~ Option[L]]                                          = previous.meta.codec ~ meta.codec
+      val codec: Codec[BM ~ Option[L]]                                          = previous.codec ~ meta.codec
 
       Meta0(
         codec,
-        previous.meta.fields ::: (metaElt :: HNil),
-        previous.meta.metaFields ::: meta.metaFields,
-        previous.meta.idMapping ++ meta.idMapping
+        previous.fields ::: (metaElt :: HNil),
+        previous.metaFields ::: meta.metaFields,
+        previous.idMapping ++ meta.idMapping
       ) { case (b, l) =>
-        previous.meta.extract(b) ::: ((meta -> l) :: HNil)
+        previous.extract(b) ::: ((meta -> l) :: HNil)
       }
     }
-  }
 
+    def apply[T, MT, F <: HList, MF <: HList, EF <: HList](
+      _codec: Codec[MT],
+      _fields: F,
+      _metaFields: MF,
+      _idMapping: Map[UUID, UUID]
+    )(_extract: MT => EF): Meta0.Aux[T, MT, F, MF, EF] =
+      new Meta0[T] {
+        override final type MetaT  = MT
+        override final type MetaF  = F
+        override final type MetaMF = MF
+        override final type MetaEF = EF
+
+        override final val codec: Codec[MetaT]        = _codec
+        override final val fields: MetaF              = _fields
+        override final val metaFields: MF             = _metaFields
+        override final val idMapping: Map[UUID, UUID] = _idMapping
+        override final val extract                    = _extract
+      }
+  }
 }
