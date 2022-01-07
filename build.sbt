@@ -3,14 +3,15 @@ lazy val commonSettings = Seq(
   // Compilation
   scalaVersion := "2.13.7",
   scalacOptions ++= Seq("-Ymacro-annotations", "-language:dynamics"),
-  organization := "fr.valentinhenry",
   // ScalaFmt
   scalafmtOnCompile := true,
   // Resolvers
   resolvers += Resolver.sonatypeRepo("public"),
   resolvers += Resolver.sonatypeRepo("snapshots"),
   // Publishing
+  organization := "fr.valentin-henry",
   licenses ++= Seq(("MIT", url("http://opensource.org/licenses/MIT"))),
+  homepage := Some(url("https://github.com/valentinHenry/blaireau")),
   developers := List(
     Developer("Firiath", "Valentin Henry", "valentin.hnry@gmail.com", url("https://valentin-henry.fr"))
   ),
@@ -41,7 +42,7 @@ lazy val dsl = project
   .in(file("modules/dsl"))
   .settings(
     name        := "blaireau-dsl",
-    description := "A postgresql DSL for Skunk."
+    description := "A minimalistic SQL DSL for the Scala Skunk Library."
   )
   .settings(commonSettings)
   .settings(
