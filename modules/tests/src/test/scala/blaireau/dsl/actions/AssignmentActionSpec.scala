@@ -6,7 +6,7 @@
 package blaireau.dsl.actions
 
 import blaireau.dsl._
-import blaireau.dsl.assignment.AssignmentAction
+import blaireau.dsl.assignment.{AssignableMeta, AssignmentAction}
 import blaireau.metas.Meta
 import munit.FunSuite
 import shapeless.the
@@ -14,10 +14,10 @@ import skunk.codec.all._
 import skunk.{Codec, ~}
 
 class AssignmentActionSpec extends FunSuite {
-  val pointCodec: Codec[Points]      = (int8 ~ int4).gimap[Points]
-  val maybeCodec                     = (int4 ~ int8.opt).gimap[Maybe]
-  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec ~ text.opt ~ maybeCodec.opt).gimap[Blaireau]
-  val meta                           = the[Meta[Blaireau]]
+
+  val pointCodec: Codec[Points] = (int8 ~ int4).gimap[Points]
+  val maybeCodec                = (int4 ~ int8.opt).gimap[Maybe]
+  val meta                      = AssignableMeta.makeSelectable(the[Meta[Blaireau]])
 
   private[this] def assert[A](assign: AssignmentAction[A], dummy: A, sql: String, codec: Codec[A]): Unit = {
     assertEquals(assign.toFragment(FieldNamePicker.empty).sql, sql)
@@ -26,6 +26,8 @@ class AssignmentActionSpec extends FunSuite {
   }
 
   case class Points(yes: Long, no: Int)
+
+  val blaireauCodec: Codec[Blaireau] = (text ~ int4 ~ pointCodec ~ text.opt ~ maybeCodec.opt).gimap[Blaireau]
 
   case class Maybe(ok: Int, oui: Option[Long])
 

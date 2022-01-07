@@ -6,7 +6,7 @@
 package blaireau.dsl.assignment
 
 import blaireau.dsl.assignment.AssignmentAction._
-import blaireau.metas.{Meta, MetaField, MetaUtils}
+import blaireau.metas.{MetaField, MetaUtils}
 import shapeless.HList
 import shapeless.ops.hlist.{LeftReducer, Mapper}
 import skunk.util.Twiddler
@@ -17,10 +17,10 @@ trait MetaFieldAssignmentSyntax {
 
   import MetaFieldAssignmentOps._
 
-  implicit final def assignentOpsMetaSyntax[T, F <: HList, MF <: HList, EF <: HList](
-    me: Meta.Aux[T, F, MF, EF]
-  ): MetadOps[T, F, MF, EF] =
-    new MetadOps[T, F, MF, EF](me)
+  implicit final def assignentOpsMetaSyntax[T, F <: HList, EF <: HList](
+    me: AssignableMeta[T, F, EF]
+  ): MetaOps[T, F, EF] =
+    new MetaOps[T, F, EF](me)
 
   implicit final def assignmentOpsMetaFieldSyntax[T](mf: MetaField[T]): MetaFieldOps[T] =
     new MetaFieldOps[T](mf)
@@ -32,7 +32,7 @@ trait MetaFieldAssignmentSyntax {
 }
 
 object MetaFieldAssignmentOps {
-  final class MetadOps[T, F <: HList, MF <: HList, EF <: HList](meta: Meta.Aux[T, F, MF, EF]) {
+  final class MetaOps[T, F <: HList, EF <: HList](meta: AssignableMeta[T, F, EF]) {
     def :=[MEF <: HList, LRO, UF](right: T)(implicit
       m: Mapper.Aux[assignmentApplier.type, EF, MEF],
       r: LeftReducer.Aux[MEF, actionAssignmentFolder.type, LRO],

@@ -14,4 +14,15 @@ package object dsl
   extends AllMetaInstances
   with MetaFieldBooleanSyntax
   with MetaFieldAssignmentSyntax
-  with TwiddlerInstances {}
+  with TwiddlerInstances {
+
+  // TODO remove ? Helpers for intellij
+  //  implicit def _dummyMapper[O <: HList]: Mapper.Aux[assignmentApplier.type, Nothing, O] =
+  //    throw new IllegalStateException()
+  //  implicit def _dummyHlistReducer[O <: HList]: LeftReducer.Aux[Nothing, actionAssignmentFolder.type, O] =
+  //    throw new IllegalStateException()
+  //  implicit def _dummyEq[A]: =:=[Nothing, AssignmentAction[A]] =
+  //    throw new IllegalStateException()
+  //  implicit def _dummyTw: Twiddler.Aux[Option[Nothing], Nothing] =
+  //    throw new IllegalStateException()
+}

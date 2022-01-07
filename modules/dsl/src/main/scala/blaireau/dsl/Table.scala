@@ -6,7 +6,7 @@
 package blaireau.dsl
 
 import blaireau.dsl.actions.FieldNamePicker
-import blaireau.dsl.assignment.{AssignmentAction, actionAssignmentFolder, assignmentApplier}
+import blaireau.dsl.assignment.{AssignableMeta, AssignmentAction, actionAssignmentFolder, assignmentApplier}
 import blaireau.dsl.builders.{DeleteCommandBuilder, InsertCommandBuilder, SelectQueryBuilder, UpdateOpt}
 import blaireau.dsl.filtering.BooleanAction
 import blaireau.dsl.selection.SelectableMeta
@@ -70,7 +70,7 @@ final class Table[T, F <: HList, MF <: HList, EF <: HList](
     ev: LRO =:= AssignmentAction[UF],
     tw: Twiddler.Aux[T, UF]
   ): UpdateCommand[T] =
-    update(meta := elt)
+    update(AssignableMeta.makeSelectable(meta) := elt)
 
   override protected[this] def update[U](updates: AssignmentAction[U]): UpdateCommand[U] =
     new UpdateCommand[U](tableName, picker, meta, updates, BooleanAction.empty)
