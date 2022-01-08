@@ -7,14 +7,15 @@ lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
   // Resolvers
   resolvers += Resolver.sonatypeRepo("public"),
-  resolvers += Resolver.sonatypeRepo("snapshots"),
-  // Publishing
+  // Publication
   organization := "fr.valentin-henry",
+  homepage     := Some(url("https://github.com/valentinHenry/blaireau")),
   licenses ++= Seq(("MIT", url("http://opensource.org/licenses/MIT"))),
-  homepage := Some(url("https://github.com/valentinHenry/blaireau")),
   developers := List(
     Developer("Firiath", "Valentin Henry", "valentin.hnry@gmail.com", url("https://valentin-henry.fr"))
   ),
+  sonatypeCredentialHost := "s01.oss.sonatype.org",
+  sonatypeRepository     := "https://s01.oss.sonatype.org/service/local",
   // Headers
   headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentStyle.cppStyleLineComment),
   headerLicense := Some(
@@ -102,3 +103,5 @@ lazy val tests = project
   .enablePlugins(AutomateHeaderPlugin)
   .enablePlugins(ScalafmtPlugin)
   .dependsOn(dsl, refined, newtype, circe)
+
+ThisBuild / versionScheme := Some("early-semver")
