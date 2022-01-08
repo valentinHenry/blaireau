@@ -44,13 +44,13 @@ In your `build.sbt` add the following line:
 resolvers += Resolver.sonatypeRepo("public")
 
 // For the SQL DSL:
-libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
+libraryDependencies += "fr.valentin-henry" %% "blaireau-dsl" % Version
 // For Timepit's Refined Metas
-libraryDependencies += "fr.valentinhenry" %% "blaireau-refined" % Version
+libraryDependencies += "fr.valentin-henry" %% "blaireau-refined" % Version
 // For Estatico's Newtype Metas
-libraryDependencies += "fr.valentinhenry" %% "blaireau-newtype" % Version
+libraryDependencies += "fr.valentin-henry" %% "blaireau-newtype" % Version
 // For Circe's Json Metas
-libraryDependencies += "fr.valentinhenry" %% "blaireau-circe" % Version
+libraryDependencies += "fr.valentin-henry" %% "blaireau-circe" % Version
 ```
 
 ## Metas
