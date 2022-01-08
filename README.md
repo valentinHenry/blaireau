@@ -1,7 +1,7 @@
 # Blaireau
 [![CI](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml/badge.svg)](https://github.com/valentinHenry/blaireau/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/valentinHenry/blaireau/branch/master/graph/badge.svg?token=LFQYEC7QD4)](https://codecov.io/gh/valentinHenry/blaireau)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/fr.valentin-henry/blaireau-dsl/badge.svg)](https://maven-badges.herokuapp.com/maven-central/fr.valentin-henry/blaireau-dsl)
+[![Maven Central](https://img.shields.io/maven-central/v/fr.valentin-henry/blaireau-dsl_2.13.svg)](https://maven-badges.herokuapp.com/maven-central/fr.valentin-henry/blaireau-dsl_2.13)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
 **Blaireau** is a minimalistic type safe SQL DSL for the [Skunk library](https://github.com/tpolecat/skunk)
@@ -38,16 +38,11 @@ If this project interests you, feel free to drop a :star: to encourage me workin
 
 
 ## Quickstart with sbt
-If you want to test / have fun with it, no artefacts is published at the moment therefore you must publish it locally
-```shell
-$> git clone git@github.com:valentinHenry/blaireau.git
-$> cd blaireau/
-$> sbt publishLocal
-```
-
 In your `build.sbt` add the following line:
 
 ```scala
+resolvers += Resolver.sonatypeRepo("public")
+
 // For the SQL DSL:
 libraryDependencies += "fr.valentinhenry" %% "blaireau-dsl" % Version
 // For Timepit's Refined Metas
