@@ -1,7 +1,7 @@
 // Global Settings
 lazy val commonSettings = Seq(
   // Compilation
-  scalaVersion := "2.13.7",
+  scalaVersion := "2.13.11",
   scalacOptions ++= Seq("-Ymacro-annotations", "-language:dynamics"),
   // ScalaFmt
   scalafmtOnCompile := true,
