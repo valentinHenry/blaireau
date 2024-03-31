@@ -212,7 +212,7 @@ object Meta {
       H,
       FieldType[K, MetaField[H]] :: HNil,
       MetaField[H] :: HNil,
-      ExtractedField[H] :: HNil,
+      ExtractedField[H] :: HNil
     ] = {
       val fieldName: String = w.value.name
       val fid               = UUID.randomUUID()
@@ -316,7 +316,7 @@ object Meta {
       Option[H],
       FieldType[K, OptionalMeta.Aux[H, HMF, HEF, IHF, IHMF, IHEF]] :: HNil,
       HMF,
-      ExtractedOptionalMeta[H, HMF, HEF, IHF, IHMF, IHEF] :: HNil,
+      ExtractedOptionalMeta[H, HMF, HEF, IHF, IHMF, IHEF] :: HNil
     ] = {
       val optionMeta = hOptionMeta.value
 
@@ -325,7 +325,7 @@ object Meta {
         Option[H],
         FieldType[K, OptionalMeta.Aux[H, HMF, HEF, IHF, IHMF, IHEF]] :: HNil,
         HMF,
-        ExtractedOptionalMeta[H, HMF, HEF, IHF, IHMF, IHEF] :: HNil,
+        ExtractedOptionalMeta[H, HMF, HEF, IHF, IHMF, IHEF] :: HNil
       ](
         optionMeta.codec,
         field[K](optionMeta) :: HNil,
