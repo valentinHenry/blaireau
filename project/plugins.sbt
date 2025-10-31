@@ -1,6 +1,6 @@
 addSbtPlugin("com.github.sbt"            % "sbt-ci-release"   % "1.5.12")
 addSbtPlugin("org.jetbrains"             % "sbt-ide-settings" % "1.1.0")
-addSbtPlugin("org.scalameta"             % "sbt-scalafmt"     % "2.5.2")
+addSbtPlugin("org.scalameta"             % "sbt-scalafmt"     % "2.5.6")
 addSbtPlugin("org.scalameta"             % "sbt-scalafmt"     % "2.4.6")
 addSbtPlugin("org.scoverage"             % "sbt-scoverage"    % "2.0.9")
 addSbtPlugin("com.timushev.sbt"          % "sbt-rewarn"       % "0.1.3")
