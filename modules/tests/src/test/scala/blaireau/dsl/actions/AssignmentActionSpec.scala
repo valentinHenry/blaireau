@@ -37,7 +37,7 @@ class AssignmentActionSpec extends FunSuite {
 
   test("Multiple assignations") {
     val assign: AssignmentAction[String ~ Int] = (meta.name := "newName") <+> (meta.age := 42)
-    assert(assign, ("newName", 42), "name = $1, age = $2", (text ~ int4))
+    assert(assign, ("newName", 42), "name = $1, age = $2", text ~ int4)
   }
 
   test("One embedded assignation") {
