@@ -18,7 +18,7 @@ lazy val commonSettings = Seq(
   sonatypeRepository     := "https://s01.oss.sonatype.org/service/local",
   // Headers
   headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentStyle.cppStyleLineComment),
-  headerLicense := Some(
+  headerLicense  := Some(
     HeaderLicense.Custom(
       """|Written by Valentin "Firiath" Henry
          |
