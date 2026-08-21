@@ -1,4 +1,4 @@
-addSbtPlugin("com.github.sbt"            % "sbt-ci-release"   % "1.5.12")
+addSbtPlugin("com.github.sbt"            % "sbt-ci-release"   % "1.12.1")
 addSbtPlugin("org.jetbrains"             % "sbt-ide-settings" % "1.1.0")
 addSbtPlugin("org.scalameta"             % "sbt-scalafmt"     % "2.5.2")
 addSbtPlugin("org.scalameta"             % "sbt-scalafmt"     % "2.4.6")
